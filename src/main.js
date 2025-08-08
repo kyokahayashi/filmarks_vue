@@ -1,5 +1,3 @@
-import './assets/main.css'
-
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 
@@ -14,9 +12,6 @@ const vuetify = createVuetify({
   components,
   directives,
 })
-
-
-
 
 const app = createApp(App)
 
