@@ -17,7 +17,6 @@ const props = defineProps({
   }
 })
 console.log('movieCardのprops', props)
-defineEmits(['view-detail'])
 </script>
 
 <style lang="scss" scoped></style>
