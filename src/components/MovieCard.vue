@@ -6,9 +6,6 @@
     <v-card-text>
       {{ movie.description }}
     </v-card-text>
-    <v-card-actions>
-      <v-btn> 詳細を見る </v-btn>
-    </v-card-actions>
   </v-card>
 </template>
 
@@ -20,7 +17,6 @@ const props = defineProps({
   }
 })
 console.log('movieCardのprops', props)
-defineEmits(['view-detail'])
 </script>
 
 <style lang="scss" scoped></style>

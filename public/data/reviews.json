@@ -1,0 +1,42 @@
+[
+  {
+    "id": 1,
+    "movieId": 1,
+    "author": "Alice",
+    "rating": 5,
+    "comment": "映像がとても美しく、音楽も感動的でした！",
+    "createdAt": "2025-08-01T10:15:00Z"
+  },
+  {
+    "id": 2,
+    "movieId": 1,
+    "author": "Bob",
+    "rating": 4,
+    "comment": "ストーリーは王道だけど、キャラクターが魅力的でした。",
+    "createdAt": "2025-08-03T14:30:00Z"
+  },
+  {
+    "id": 3,
+    "movieId": 2,
+    "author": "Charlie",
+    "rating": 3,
+    "comment": "少し長く感じたけど、最後は泣いてしまいました。",
+    "createdAt": "2025-08-05T09:45:00Z"
+  },
+  {
+    "id": 4,
+    "movieId": 3,
+    "author": "Daisy",
+    "rating": 4,
+    "comment": "主演声優の演技が最高！また観たい映画。",
+    "createdAt": "2025-08-07T18:20:00Z"
+  },
+  {
+    "id": 5,
+    "movieId": 2,
+    "author": "Eve",
+    "rating": 2,
+    "comment": "映像は良かったけど、ストーリーが合わなかった。",
+    "createdAt": "2025-08-09T12:05:00Z"
+  }
+]
