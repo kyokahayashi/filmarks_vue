@@ -6,13 +6,15 @@
     <v-card-text>
       {{ movie.description }}
     </v-card-text>
-    <v-card-actions>
-      <v-btn> 詳細を見る </v-btn>
-    </v-card-actions>
+    <!-- <v-card-actions>
+      <v-btn @click="goToMovieDetail"> 詳細を見る </v-btn>
+    </v-card-actions> -->
   </v-card>
 </template>
 
 <script setup>
+import router from '@/router'
+
 const props = defineProps({
   movie: {
     type: Object,
@@ -21,6 +23,10 @@ const props = defineProps({
 })
 console.log('movieCardのprops', props)
 defineEmits(['view-detail'])
+
+// const goToMovieDetail = () => {
+//   router.push(`/movie/${props.movie.id}`)
+// }
 </script>
 
 <style lang="scss" scoped></style>

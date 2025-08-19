@@ -1,0 +1,29 @@
+[
+  {
+    "id": 1,
+    "title": "君の名は。",
+    "description": "東京と田舎の高校生が夢の中で入れ替わる、不思議で切ない青春ラブストーリー。",
+    "director": "新海誠",
+    "year": 2016,
+    "rating": 4.8,
+    "image": "/movies/私の名前は.png"
+  },
+  {
+    "id": 2,
+    "title": "天気の子",
+    "description": "天候を操る少女と東京に家出してきた少年の物語。",
+    "director": "新海誠",
+    "year": 2019,
+    "rating": 4.5,
+    "image": "/movies/天気の犬.png"
+  },
+  {
+    "id": 3,
+    "title": "すずめの戸締まり",
+    "description": "災いをもたらす扉を閉めるために旅する少女・すずめの冒険。",
+    "director": "新海誠",
+    "year": 2022,
+    "rating": 4.6,
+    "image": "/movies/すずめの戸締り.png"
+  }
+]
