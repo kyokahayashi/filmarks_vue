@@ -1,10 +1,10 @@
 <template>
   <div>
-    <h2 class="text-h5 mb-4">新着レビュー</h2>
+    <h2 class="text-h4 mb-4">新着レビュー</h2>
     <v-container>
       <v-row>
         <v-col v-for="review in latestReviews" :key="review" cols="12" md="4">
-          <v-card class="pa-3" outlined>
+          <v-card class="ma-3" elevation="10" max-width="500" height="240">
             <v-card-title>🎞️{{ getMovieTitle(review.movieId) }}</v-card-title>
             <v-card-subtitle>★{{ review.rating }}</v-card-subtitle>
             <v-card-text>{{ review.comment }}</v-card-text>
