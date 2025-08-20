@@ -6,7 +6,7 @@
     <p>監督：{{ movie.director }}</p>
     <p>公開年：{{ movie.year }}</p>
     <p>avg rating</p>
-    <!-- ここにこの映画のレビューカードを入れたい -->
+    <ReviewList />
   </div>
   <div v-else>
     <p>読み込み中、または映画が見つかりません</p>
@@ -14,22 +14,21 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
-import axios from 'axios';
+import { useMovieStore } from '@/stores/movieStore';
+import ReviewList from '@/components/Review/ReviewList.vue';
 
 const route = useRoute()
-const movieId = Number(route.params.id)
+const movieStore = useMovieStore()
 const movie = ref(null)
-
-
-onMounted(async () => {
-  try{
-    const res = await axios.get('/movies.json')
-  movie.value = res.data.find(m => m.id === movieId)
-  } catch (error) {
-    console.error('データ取得エラー：', error)
+onMounted(async() => {
+  if(!movieStore.movies.length){
+    await movieStore.fetchMovies()
   }
+
+  const movieId = Number(route.params.id)
+  movie.value = movieStore.getMovieById(movieId)
 })
 </script>
 
