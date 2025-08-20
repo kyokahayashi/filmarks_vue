@@ -38,5 +38,145 @@
     "rating": 2,
     "comment": "映像は良かったけど、ストーリーが合わなかった。",
     "createdAt": "2025-08-09T12:05:00Z"
+  },
+  {
+    "id": 6,
+    "movieId": 1,
+    "author": "ayaka",
+    "comment": "映像美が圧倒的で、音楽も素晴らしい。何度見ても泣けます。",
+    "rating": 5
+  },
+  {
+    "id": 7,
+    "movieId": 4,
+    "author": "takuya",
+    "comment": "千尋の成長物語が心に響きました。ジブリの最高傑作だと思います。",
+    "rating": 5
+  },
+  {
+    "id": 8,
+    "movieId": 3,
+    "author": "mai",
+    "comment": "幻想的な世界観に引き込まれましたが、少し難しい部分もありました。",
+    "rating": 4
+  },
+  {
+    "id": 9,
+    "movieId": 1,
+    "author": "shota",
+    "comment": "東京の描写がリアルで共感しました。ラストは切なすぎる…！",
+    "rating": 4
+  },
+  {
+    "id": 10,
+    "movieId": 6,
+    "author": "rina",
+    "comment": "人間と自然の関係について深く考えさせられる作品。",
+    "rating": 5
+  },
+  {
+    "id": 11,
+    "movieId": 6,
+    "author": "haru",
+    "comment": "夢と現実の間で揺れる主人公に共感しました。少し地味ですが好きです。",
+    "rating": 4
+  },
+  {
+    "id": 12,
+    "movieId": 8,
+    "author": "yuto",
+    "comment": "重苦しいテーマですが、ホアキンの演技は鳥肌もの。",
+    "rating": 5
+  },
+  {
+    "id": 13,
+    "movieId": 9,
+    "author": "kana",
+    "comment": "難解だけどハマると最高。ノーラン作品の中でも一番好きです。",
+    "rating": 5
+  },
+  {
+    "id": 14,
+    "movieId": 10,
+    "author": "miki",
+    "comment": "音楽と映像の融合が素晴らしい！ただ結末は切なかった…。",
+    "rating": 4
+  },
+  {
+    "id": 15,
+    "movieId": 11,
+    "author": "daisuke",
+    "comment": "10年以上追ってきたシリーズの集大成。涙なしには見られない。",
+    "rating": 5
+  },
+  {
+    "id": 16,
+    "movieId": 12,
+    "author": "saki",
+    "comment": "タイムトラベル物の王道！何度見てもワクワクする。",
+    "rating": 5
+  },
+  {
+    "id": 17,
+    "movieId": 13,
+    "author": "akira",
+    "comment": "重いテーマですが、映像と音楽が心に刺さりました。忘れられない映画。",
+    "rating": 5
+  },
+  {
+    "id": 18,
+    "movieId": 14,
+    "author": "mei",
+    "comment": "ロマンス映画の金字塔。あまりに有名なシーンが多すぎる。",
+    "rating": 4
+  },
+  {
+    "id": 19,
+    "movieId": 15,
+    "author": "ryo",
+    "comment": "緊迫感ある演技合戦。映画史に残る名作。",
+    "rating": 5
+  },
+  {
+    "id": 20,
+    "movieId": 16,
+    "author": "yumi",
+    "comment": "希望をテーマにしたラストが最高に美しい。何度でも見たい。",
+    "rating": 5
+  },
+  {
+    "id": 21,
+    "movieId": 17,
+    "author": "jun",
+    "comment": "歴代スパイダーマンが揃う展開に鳥肌。ファン必見！",
+    "rating": 5
+  },
+  {
+    "id": 22,
+    "movieId": 1,
+    "author": "takumi",
+    "comment": "ストーリーも良いけど、特にRADWIMPSの音楽が印象的でした。",
+    "rating": 5
+  },
+  {
+    "id": 23,
+    "movieId": 10,
+    "author": "sayaka",
+    "comment": "ジャズが好きな人ならもっと楽しめると思う。",
+    "rating": 4
+  },
+  {
+    "id": 24,
+    "movieId": 8,
+    "author": "kenta",
+    "comment": "胸が苦しくなる映画。でも強烈に心に残りました。",
+    "rating": 4
+  },
+  {
+    "id": 25,
+    "movieId": 4,
+    "author": "aoi",
+    "comment": "ジブリで一番思い出深い作品。子どもの頃から大好きです。",
+    "rating": 5
   }
 ]
