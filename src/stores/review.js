@@ -17,7 +17,7 @@ export const useReviewStore = defineStore('review', () => {
   }
   // 特定の映画レビューだけ返す
   const getReviewByMovieId = (id) => {
-    return reviews.value.filter((r) => r.movieId === Number(movieId))
+    return reviews.value.filter((r) => r.movieId === Number(id))
   }
   // 新しいレビューを追加
   const addReview = (newReview) => {
