@@ -1,23 +1,30 @@
 import { defineStore } from 'pinia';
-import { fetchMovieDetail, fetchNowPlayMovies, fetchPopularMovies } from '../../api/tmdb';
 import { tmdbApi } from '../../api/tmdbApi';
 
-export const useMovieStore = defineStore("movie", {
+export const useMoviesStore = defineStore("movie", {
   state: () => {
     return {
-      // movies: [],
+      // 各カテゴリの映画データ
       nowPlayingMovies: [],
       popularMovies: [],
-      // movie: null,
-      // loading: false,
+      upcomingMovies: [],
+      // 単体の映画データ
+      selectedMovie: null,
+
+      // ローディング状態
       loading: {
         nowPlaying: false,
-        popular: false
+        popular: false,
+        upcoming: false,
+        movieDetails: false
       },
 
+      // エラー状態
       errors: {
         nowPlaying: null,
         popular: null,
+        upcoming: false,
+        movieDetails: null
       }
     };
   },
@@ -40,7 +47,7 @@ export const useMovieStore = defineStore("movie", {
           this.nowPlayingMovies = [...this.nowPlayingMovies, ...data.results];
         } else {
           this.nowPlayingMovies = data.results;
-        }
+        };
         // this.pagination.nowPlaying = {
         //   currentPage: data.page,
         //   totalPages: data.total_pages,
@@ -80,10 +87,34 @@ export const useMovieStore = defineStore("movie", {
       }
     },
 
+    // 公開予定の映画を取得
+    async fetchUpcomingMovies(page = 1, append = false) {
+      this.loading.upcoming = true;
+      this.errors.upcoming = null;
+
+      try {
+        const data = await tmdbApi.getUpcomingMovies(page);
+        if (append) {
+          this.upcomingMovies = [...this.upcomingMovies, ...data.results];
+        } else {
+          this.upcomingMovies = data.results;
+        }
+        return data;
+      } catch (error) {
+        this.errors.upcoming = error.message;
+        console.error('公開予定映画の取得に失敗:', error);
+        throw error;
+      } finally {
+        this.loading.upcoming = false;
+      }
+    },
+
+
     // 映画の詳細を取得
     async fetchMovieDetail(movieId) {
       this.loading.movieDetails = true;
       this.errors.movieDetails = null;
+      console.log('movieID', movieId)
       try {
         const data = await tmdbApi.getMovieDetails(movieId);
         this.selectedMovie = data;
@@ -96,53 +127,18 @@ export const useMovieStore = defineStore("movie", {
         this.loading.movieDetails = false;
       }
     },
-
-    // ★★★★既存成功コード
-    // async fetchNowPlayingMovies(page = 1) {
+    // async loadPopular() {
     //   this.loading = true;
     //   this.error = null;
-
-    //   const options = {
-    //     method: 'GET',
-    //     headers: {
-    //       accept: 'application/json',
-    //       Authorization: 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI1ZmNjMzk4YzFlY2ZiZjk4ZTFmY2EzMzVlNWVkMTY2OSIsIm5iZiI6MTc1NTczOTg0MS43NTgwMDAxLCJzdWIiOiI2OGE2NzZjMTI1MzVkZTUzNmM1ZGQ3OTYiLCJzY29wZXMiOlsiYXBpX3JlYWQiXSwidmVyc2lvbiI6MX0.ViYalzjIELrG1UKie4jqmdpCAGpWESjMNlApLu3RiBk'
-    //     }
-    //   };
-
     //   try {
-    //     const response = await fetch(
-    //       `https://api.themoviedb.org/3/movie/now_playing?language=ja&page=${page}&region=JP`,
-    //       options
-    //     );
-
-    //     if (!response.ok) {
-    //       throw new Error(`HTTP error! status: ${response.status}`);
-    //     }
-
-    //     const data = await response.json();
-    //     this.movies = data.results || [];
-    //     return data;
-    //   } catch (error) {
-    //     this.error = error.message;
-    //     console.error('映画データの取得に失敗しました:', error);
-    //     throw error;
+    //     const data = await fetchPopularMovies();
+    //     this.movies = data.results;
+    //   } catch (err) {
+    //     this.error = "映画データの取得に失敗しました";
     //   } finally {
     //     this.loading = false;
     //   }
     // },
-    async loadPopular() {
-      this.loading = true;
-      this.error = null;
-      try {
-        const data = await fetchPopularMovies();
-        this.movies = data.results;
-      } catch (err) {
-        this.error = "映画データの取得に失敗しました";
-      } finally {
-        this.loading = false;
-      }
-    },
     async search(query) {
       this.loading = true;
       try {
@@ -151,61 +147,16 @@ export const useMovieStore = defineStore("movie", {
         this.loading = false;
       }
     },
-    async loadMovieDetail(id) {
-      this.loading = true;
-      this.error = null;
-      try {
-        this.movie = await fetchMovieDetail(id);
-      } catch (err) {
-        this.error = "映画詳細の取得に失敗しました";
-      } finally {
-        this.loading = false;
-      }
-    }
+    // async loadMovieDetail(id) {
+    //   this.loading = true;
+    //   this.error = null;
+    //   try {
+    //     this.movie = await fetchMovieDetail(id);
+    //   } catch (err) {
+    //     this.error = "映画詳細の取得に失敗しました";
+    //   } finally {
+    //     this.loading = false;
+    //   }
+    // }
   }
 })
-
-
-export const useMoviesStore = defineStore('movies', {
-  state: () => ({
-    nowPlayingMovies: [],
-    loading: false,
-    error: null
-  }),
-
-  actions: {
-    async fetchNowPlayingMovies(page = 1) {
-      this.loading = true;
-      this.error = null;
-
-      const options = {
-        method: 'GET',
-        headers: {
-          accept: 'application/json',
-          Authorization: 'Bearer YOUR_API_TOKEN_HERE'
-        }
-      };
-
-      try {
-        const response = await fetch(
-          `https://api.themoviedb.org/3/movie/now_playing?language=ja&page=${page}&region=JP`,
-          options
-        );
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        this.movies = data.results || [];
-        return data;
-      } catch (error) {
-        this.error = error.message;
-        console.error('映画データの取得に失敗しました:', error);
-        throw error;
-      } finally {
-        this.loading = false;
-      }
-    }
-  }
-});

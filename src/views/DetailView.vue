@@ -1,35 +1,173 @@
 <template>
-  <div v-if="movie">
-    <h3>{{ movie.title }}</h3>
-    <img :src="movie.image" alt="映画の画像" width="200" />
-    <p>詳細：{{ movie.description }}</p>
-    <p>監督：{{ movie.director }}</p>
-    <p>公開年：{{ movie.year }}</p>
-    <p>avg rating</p>
-    <ReviewList />
-  </div>
-  <div v-else>
-    <p>読み込み中、または映画が見つかりません</p>
-  </div>
+  <v-container>
+    <!-- ローディング中 -->
+    <div v-if="loadingMovieDetails">
+      <v-progress-circular indeterminate />
+      <p>映画詳細を読み込み中．．．</p>
+    </div>
+
+    <!-- エラー状態 -->
+    <v-alert v-else-if="errorMovieDetails" type="error">
+      {{ errorMovieDetails }}
+      <div class="mt-3">
+        <v-btn @click="retry" color="primary">再試行</v-btn>
+        <v-btn @click="goBack" color="secondary" class="ml-2">戻る</v-btn>
+      </div>
+    </v-alert>
+
+    <!-- 映画詳細表示 -->
+    <div v-else-if="movieDetail">
+      <v-row>
+        <v-col cols="12" md="4">
+          <v-img
+            :src="getImageUrl(movieDetail.poster_path)"
+            :alt="movieDetail.title"
+            height="600"
+            cover
+          />
+        </v-col>
+        <v-col cols="12" md="8">
+          <div class="movie-info">
+            <h1 class="text-h4 mb-4">{{ movieDetail.title }}</h1>
+            <p
+              class="text-subtitle-1 mb-2"
+              v-if="movieDetail.original_title !== movieDetail.title"
+            >
+              原題：{{ movieDetail.original_title }}
+            </p>
+            <div class="movie-meta mb-4">
+              <p><strong>公開日：</strong></p>
+              <p><strong>上映時間：</strong></p>
+              <p><strong>平均評価：</strong></p>
+            </div>
+
+            <!-- ジャンル -->
+
+            <!-- あらすじ -->
+            <div class="overview">
+              <h3 class="text-h6 mb-2">あらすじ</h3>
+              <p class="text-body-1">
+                {{ movieDetail.overview || 'あらすじが登録されていません' }}
+              </p>
+            </div>
+
+            <!-- アクションボタン -->
+            <div class="actions mt-6">
+              <v-btn
+                @click="goBack"
+                prependIcon="mdi-arrow-left"
+                color="secondary"
+              >
+                戻る
+              </v-btn>
+            </div>
+          </div>
+        </v-col>
+      </v-row>
+      <!-- <ReviewList :movieId="movieId" /> -->
+    </div>
+    <!-- データが存在しない場合 -->
+    <div v-else class="no-data">
+      <p>映画情報が見つかりませんでした</p>
+      <v-btn @click="goBack" color="primary">戻る</v-btn>
+    </div>
+  </v-container>
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue';
-import { useRoute } from 'vue-router';
-import { useMovieStore } from '@/stores/movieStore';
-import ReviewList from '@/components/Review/ReviewList.vue';
+import { computed, onMounted, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { useMoviesStore } from '@/stores/movieStore';
+// import ReviewList from '@/components/Review/ReviewList.vue';
 
-const route = useRoute()
-const movieStore = useMovieStore()
-const movie = ref(null)
-onMounted(async() => {
-  if(!movieStore.movies.length){
-    await movieStore.fetchMovies()
+const route = useRoute();
+const router = useRouter();
+const movieStore = useMoviesStore();
+
+// 映画IDをルートパラメータから取得
+const movieId = computed(() => Number(route.params.id));
+
+// 現在表示中の映画詳細
+const movieDetail = computed(() => movieStore.selectedMovie);
+const loadingMovieDetails = computed(() => movieStore.loading.movieDetails);
+const errorMovieDetails = computed(() => movieStore.errors.movieDetails);
+
+// TMDBの画像URLを生成
+const getImageUrl = (posterPath) => {
+  if(!posterPath) return'/placeholder-image.jpg';
+  return `https://image.tmdb.org/t/p/w500${posterPath}`;
+}
+
+// 日付フォーマット関数
+const formatDate = (dateString) => {
+  if (!dateString) return '不明';
+  try{
+    return new Date(dateString).toLocaleDateString('ja-Jp', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    })
+  } catch(error) {
+    return dateString;
   }
+};
 
-  const movieId = Number(route.params.id)
-  movie.value = movieStore.getMovieById(movieId)
+// 映画詳細を取得
+const fetchMovieDetails = async () => {
+  const id = movieId.value
+  if(!id || isNaN(id)) {
+    console.error('無効な映画ID：', id);
+    return;
+  }
+  try {
+      console.log('映画詳細を取得中...', id);
+      await movieStore.fetchMovieDetail(id);
+    } catch (error){
+      console.error('映画詳細の取得に失敗:', error);
+    }
+};
+
+// 再試行
+const retry = () => {
+  fetchMovieDetails();
+};
+
+// 戻る
+const goBack = () => {
+  router.go(-1); //ブラウザの戻るボタンと同じ
+}
+
+// ルートパラメータが変更されたときに再取得
+watch(movieId, (newId) => {
+  if(newId && !isNaN(newId)){
+  fetchMovieDetails();
+  }
+}, {immediate: true});
+
+// コンポーネントマウント時の処理（必要に応じて）
+onMounted(async() => {
+  console.log('DetailView mounted, movieId:', movieId.value);
 })
 </script>
 
-<style lang="scss" scoped></style>
+<style scoped>
+.movie-info{
+  padding:20px 0
+}
+.movie-meta p{
+  margin: 8px 0;
+}
+.overview{
+  margin:20px 0;
+}
+.overview p{
+  line-height: 1.6;
+}
+.actions{
+  margin-top: 30px;
+}
+.no-data{
+  text-align: center;
+  padding: 40px;
+}
+</style>
