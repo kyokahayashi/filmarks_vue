@@ -1,5 +1,6 @@
 const API_BASE_URL = 'https://api.themoviedb.org/3';
-const API_TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI1ZmNjMzk4YzFlY2ZiZjk4ZTFmY2EzMzVlNWVkMTY2OSIsIm5iZiI6MTc1NTczOTg0MS43NTgwMDAxLCJzdWIiOiI2OGE2NzZjMTI1MzVkZTUzNmM1ZGQ3OTYiLCJzY29wZXMiOlsiYXBpX3JlYWQiXSwidmVyc2lvbiI6MX0.ViYalzjIELrG1UKie4jqmdpCAGpWESjMNlApLu3RiBk'
+const API_TOKEN = import.meta.env.VITE_TMDB_API_TOKEN;
+const API_KEY = import.meta.env.VITE_TMDB_API_KEY
 
 const createApiOptions = (method = 'GET', body = null) => {
   const options = {
@@ -56,5 +57,12 @@ export const tmdbApi = {
 
     const response = await fetch(url.toString(), createApiOptions());
     return handleApiResponse(response)
+  },
+
+  // 映画の詳細
+  async getMovieDetails(movieId, language = 'ja') {
+    const url = `${API_BASE_URL}/movie/${movieId}?language=${language}`;
+    const response = await fetch(url, createApiOptions());
+    return handleApiResponse(response);
   }
 }
