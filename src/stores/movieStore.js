@@ -5,9 +5,9 @@ export const useMoviesStore = defineStore("movie", {
   state: () => {
     return {
       // 各カテゴリの映画データ
-      nowPlayingMovies: [],
-      popularMovies: [],
-      upcomingMovies: [],
+      nowPlaying: [],
+      popular: [],
+      upcoming: [],
       // 単体の映画データ
       selectedMovie: null,
 
@@ -23,7 +23,7 @@ export const useMoviesStore = defineStore("movie", {
       errors: {
         nowPlaying: null,
         popular: null,
-        upcoming: false,
+        upcoming: null,
         movieDetails: null
       }
     };
@@ -44,15 +44,10 @@ export const useMoviesStore = defineStore("movie", {
         const data = await tmdbApi.getNowPlayingMovies(page);
 
         if (append) {
-          this.nowPlayingMovies = [...this.nowPlayingMovies, ...data.results];
+          this.nowPlaying = [...this.nowPlaying, ...data.results];
         } else {
-          this.nowPlayingMovies = data.results;
+          this.nowPlaying = data.results;
         };
-        // this.pagination.nowPlaying = {
-        //   currentPage: data.page,
-        //   totalPages: data.total_pages,
-        //   totalResults: data.total_results
-        // };
         return data;
       } catch (error) {
         this.errors.nowPlaying = error.message;
@@ -72,9 +67,9 @@ export const useMoviesStore = defineStore("movie", {
         const data = await tmdbApi.getPopularMovies(page);
 
         if (append) {
-          this.popularMovies = [...this.popularMovies, ...data.results];
+          this.popular = [...this.popular, ...data.results];
         } else {
-          this.popularMovies = data.results;
+          this.popular = data.results;
         }
 
         return data;
@@ -95,9 +90,9 @@ export const useMoviesStore = defineStore("movie", {
       try {
         const data = await tmdbApi.getUpcomingMovies(page);
         if (append) {
-          this.upcomingMovies = [...this.upcomingMovies, ...data.results];
+          this.upcoming = [...this.upcoming, ...data.results];
         } else {
-          this.upcomingMovies = data.results;
+          this.upcoming = data.results;
         }
         return data;
       } catch (error) {
@@ -127,18 +122,6 @@ export const useMoviesStore = defineStore("movie", {
         this.loading.movieDetails = false;
       }
     },
-    // async loadPopular() {
-    //   this.loading = true;
-    //   this.error = null;
-    //   try {
-    //     const data = await fetchPopularMovies();
-    //     this.movies = data.results;
-    //   } catch (err) {
-    //     this.error = "映画データの取得に失敗しました";
-    //   } finally {
-    //     this.loading = false;
-    //   }
-    // },
     async search(query) {
       this.loading = true;
       try {
@@ -147,16 +130,5 @@ export const useMoviesStore = defineStore("movie", {
         this.loading = false;
       }
     },
-    // async loadMovieDetail(id) {
-    //   this.loading = true;
-    //   this.error = null;
-    //   try {
-    //     this.movie = await fetchMovieDetail(id);
-    //   } catch (err) {
-    //     this.error = "映画詳細の取得に失敗しました";
-    //   } finally {
-    //     this.loading = false;
-    //   }
-    // }
   }
 })

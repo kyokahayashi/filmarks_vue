@@ -17,6 +17,11 @@ const createApiOptions = (method = 'GET', body = null) => {
   }
   return options;
 };
+/*
+method：httpメソッド（GET,POSTなど）
+headers:Json形式での通信を指定、Bearerトークンで認証
+body:POSTなどで送信するbodyがある場合はJSON化して追加
+*/
 
 const handleApiResponse = async (response) => {
   if (!response.ok) {
@@ -24,6 +29,10 @@ const handleApiResponse = async (response) => {
   }
   return await response.json();
 };
+/**
+response.ok:レスポンスが200番台かどうかを確認
+エラーの場合はエラーハンドリングをして、成功の場合はJSONを返す
+ */
 
 export const tmdbApi = {
   // 現在公開中の映画
@@ -36,6 +45,10 @@ export const tmdbApi = {
     const response = await fetch(url.toString(), createApiOptions());
     return handleApiResponse(response);
   },
+  /*
+  /movie/now_playing エンドポイントを使用
+  ページ番号、地域、言語をクエリパラメータとして指定
+  */
 
   // 人気の映画
   async getPopularMovies(page = 1, language = 'ja', region = 'JP') {
@@ -47,6 +60,10 @@ export const tmdbApi = {
     const response = await fetch(url.toString(), createApiOptions());
     return handleApiResponse(response);
   },
+  /**
+  /movie/popular エンドポイントを使用
+  ページ番号、地域、言語をクエリパラメータとして指定
+   */
 
   // 公開予定の映画
   async getUpcomingMovies(page = 1, language = 'ja', region = 'JP') {
@@ -58,6 +75,10 @@ export const tmdbApi = {
     const response = await fetch(url.toString(), createApiOptions());
     return handleApiResponse(response)
   },
+  /**
+  /movie/upcoming エンドポイントを使用
+  ページ番号、地域、言語をクエリパラメータとして指定
+   */
 
   // 映画の詳細
   async getMovieDetails(movieId, language = 'ja') {
@@ -65,4 +86,8 @@ export const tmdbApi = {
     const response = await fetch(url, createApiOptions());
     return handleApiResponse(response);
   }
+  /**
+  /movie/{movieId} エンドポイントを使用
+  特定の映画の詳細を取得
+   */
 }

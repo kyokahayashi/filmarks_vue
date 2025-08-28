@@ -19,7 +19,7 @@ const router = createRouter({
     {
       path: '/movie/:id',
       name: 'MovieDetail',
-      component: DetailView,
+      component: () => import("@/views/DetailView.vue"),
       props: true
     }
   ],

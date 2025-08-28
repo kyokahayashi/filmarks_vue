@@ -78,7 +78,6 @@
 import { computed, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useMoviesStore } from '@/stores/movieStore';
-// import ReviewList from '@/components/Review/ReviewList.vue';
 
 const route = useRoute();
 const router = useRouter();
