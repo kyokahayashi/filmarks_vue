@@ -1,14 +1,14 @@
 <template>
   <v-container>
     <!-- ローディング中 -->
-    <div v-if="loadingMovieDetails">
+    <div v-if="loading">
       <v-progress-circular indeterminate />
       <p>映画詳細を読み込み中．．．</p>
     </div>
 
     <!-- エラー状態 -->
-    <v-alert v-else-if="errorMovieDetails" type="error">
-      {{ errorMovieDetails }}
+    <v-alert v-else-if="error" type="error">
+      {{ error }}
       <div class="mt-3">
         <v-btn @click="retry" color="primary">再試行</v-btn>
         <v-btn @click="goBack" color="secondary" class="ml-2">戻る</v-btn>
@@ -36,9 +36,12 @@
               原題：{{ movieDetail.original_title }}
             </p>
             <div class="movie-meta mb-4">
-              <p><strong>公開日：</strong></p>
-              <p><strong>上映時間：</strong></p>
-              <p><strong>平均評価：</strong></p>
+              <p>
+                <strong>公開日：</strong
+                >{{ formatDate(movieDetail.release_date) }}
+              </p>
+              <p><strong>上映時間：</strong>{{ movieDetail.runtime }}分</p>
+              <p><strong>平均評価：</strong>{{ movieDetail.vote_average }}</p>
             </div>
 
             <!-- ジャンル -->
@@ -64,7 +67,7 @@
           </div>
         </v-col>
       </v-row>
-      <!-- <ReviewList :movieId="movieId" /> -->
+      <ReviewList :movieId="movieId"></ReviewList>
     </div>
     <!-- データが存在しない場合 -->
     <div v-else class="no-data">
@@ -78,6 +81,7 @@
 import { computed, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useMoviesStore } from '@/stores/movieStore';
+import ReviewList from '@/components/Review/ReviewList.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -88,8 +92,8 @@ const movieId = computed(() => Number(route.params.id));
 
 // 現在表示中の映画詳細
 const movieDetail = computed(() => movieStore.selectedMovie);
-const loadingMovieDetails = computed(() => movieStore.loading.movieDetails);
-const errorMovieDetails = computed(() => movieStore.errors.movieDetails);
+const loading = computed(() => movieStore.loading.movieDetails);
+const error = computed(() => movieStore.errors.movieDetails);
 
 // TMDBの画像URLを生成
 const getImageUrl = (posterPath) => {
