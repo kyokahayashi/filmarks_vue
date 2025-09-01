@@ -1,6 +1,5 @@
 const API_BASE_URL = 'https://api.themoviedb.org/3';
 const API_TOKEN = import.meta.env.VITE_TMDB_API_TOKEN;
-const API_KEY = import.meta.env.VITE_TMDB_API_KEY
 
 const createApiOptions = (method = 'GET', body = null) => {
   const options = {
@@ -36,7 +35,7 @@ response.ok:レスポンスが200番台かどうかを確認
 
 export const tmdbApi = {
   // 現在公開中の映画
-  async getNowPlayingMovies(page = 1, region = 'JP', language = 'ja') {
+  async getNowPlayingMovies(page = 1, region = 'JP', language = 'ja-JP') {
     const url = new URL(`${API_BASE_URL}/movie/now_playing`);
     url.searchParams.set('page', page.toString());
     url.searchParams.set('region', region);
@@ -51,7 +50,7 @@ export const tmdbApi = {
   */
 
   // 人気の映画
-  async getPopularMovies(page = 1, language = 'ja', region = 'JP') {
+  async getPopularMovies(page = 1, language = 'ja-JP', region = 'JP') {
     const url = new URL(`${API_BASE_URL}/movie/popular`);
     url.searchParams.set('page', page.toString());
     url.searchParams.set('language', language);
@@ -65,8 +64,18 @@ export const tmdbApi = {
   ページ番号、地域、言語をクエリパラメータとして指定
    */
 
+  // レビューズ
+  async getReviews(movieId, language = 'en-US', page = 1,) {
+    const url = new URL(`${API_BASE_URL}/movie/${movieId}/reviews`);
+    url.searchParams.set('page', page.toString())
+    url.searchParams.set('language', language);
+    const response = await fetch(url.toString(), createApiOptions());
+    return handleApiResponse(response);
+  },
+  // fetch('https://api.themoviedb.org/3/movie/movie_id/reviews?language=en-US&page=1', options)
+
   // 公開予定の映画
-  async getUpcomingMovies(page = 1, language = 'ja', region = 'JP') {
+  async getUpcomingMovies(page = 1, language = 'ja-JP', region = 'JP') {
     const url = new URL(`${API_BASE_URL}/movie/upcoming`);
     url.searchParams.set('page', page.toString());
     url.searchParams.set('language', language);
@@ -81,13 +90,15 @@ export const tmdbApi = {
    */
 
   // 映画の詳細
-  async getMovieDetails(movieId, language = 'ja') {
+  async getMovieDetails(movieId, language = 'ja-JP') {
     const url = `${API_BASE_URL}/movie/${movieId}?language=${language}`;
     const response = await fetch(url, createApiOptions());
     return handleApiResponse(response);
-  }
+  },
   /**
   /movie/{movieId} エンドポイントを使用
   特定の映画の詳細を取得
    */
+
+
 }

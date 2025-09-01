@@ -16,7 +16,7 @@ export const useMoviesStore = defineStore("movie", {
         nowPlaying: false,
         popular: false,
         upcoming: false,
-        movieDetails: false
+        movieDetails: false,
       },
 
       // エラー状態
@@ -24,8 +24,10 @@ export const useMoviesStore = defineStore("movie", {
         nowPlaying: null,
         popular: null,
         upcoming: null,
-        movieDetails: null
-      }
+        movieDetails: null,
+      },
+      // 除外するジャンルID（romance=10749）
+      EXCLUDED_GENRE_IDS: [10749]
     };
   },
   getters: {
@@ -35,7 +37,22 @@ export const useMoviesStore = defineStore("movie", {
     hasAnyError: (state) => Object.values(state.errors).some(error => error !== null),
   },
   actions: {
-    // 現在公開中の映画を取得
+    // ロマンス映画を除外するヘルパーメソッド
+    filterMovies(movies) {
+      return movies.filter(movie => {
+        // アダルトコンテンツを除外
+        if (movie.adult) return false;
+        // genre_idsが存在し、除外外相のジャンルIDが含まれていないか確認
+        if (movie.genre_ids && movie.genre_ids.length > 0) {
+          // ロマンスジャンルが含まれていたら除外
+          return !movie.genre_ids.some(genreId =>
+            this.EXCLUDED_GENRE_IDS.includes(genreId)
+          );
+        }
+        return true;
+      });
+    },
+
     async fetchNowPlayingMovies(page = 1, append = false) {
       this.loading.nowPlaying = true;
       this.errors.nowPlaying = null;
@@ -44,11 +61,19 @@ export const useMoviesStore = defineStore("movie", {
         const data = await tmdbApi.getNowPlayingMovies(page);
 
         if (append) {
-          this.nowPlaying = [...this.nowPlaying, ...data.results];
+          // 新しく取得したデータをフィルタリングしてから追加
+          const filteredMovies = this.filterMovies(data.results);
+          // すでにあるthis.nowPlaying配列に新しく取得した、data.resultsをスプレット構文で配列
+          this.nowPlaying = [...this.nowPlaying, ...filteredMovies];
         } else {
-          this.nowPlaying = data.results;
+          // フィルタリングして設定
+          this.nowPlaying = this.filterMovies(data.results);
+        }
+        // フィルタリンゴのデータを含むオブジェクトを返す
+        return {
+          ...data,
+          results: this.nowPlaying
         };
-        return data;
       } catch (error) {
         this.errors.nowPlaying = error.message;
         console.error('現在公開中の映画の取得に失敗:', error);
@@ -57,6 +82,7 @@ export const useMoviesStore = defineStore("movie", {
         this.loading.nowPlaying = false;
       }
     },
+
 
     // 人気の映画を取得
     async fetchPopularMovies(page = 1, append = false) {
@@ -67,12 +93,15 @@ export const useMoviesStore = defineStore("movie", {
         const data = await tmdbApi.getPopularMovies(page);
 
         if (append) {
-          this.popular = [...this.popular, ...data.results];
+          const filteredMovies = this.filterMovies(data.results);
+          this.popular = [...this.popular, ...filteredMovies];
         } else {
-          this.popular = data.results;
+          this.popular = this.filterMovies(data.results);
         }
-
-        return data;
+        return {
+          ...data,
+          results: this.popular
+        };
       } catch (error) {
         this.errors.popular = error.message;
         console.error('人気映画の取得に失敗:', error);
@@ -90,9 +119,10 @@ export const useMoviesStore = defineStore("movie", {
       try {
         const data = await tmdbApi.getUpcomingMovies(page);
         if (append) {
-          this.upcoming = [...this.upcoming, ...data.results];
+          const filteredMovies = this.filterMovies(data.results)
+          this.upcoming = [...this.upcoming, ...filteredMovies];
         } else {
-          this.upcoming = data.results;
+          this.upcoming = this.filterMovies(data.results);
         }
         return data;
       } catch (error) {
@@ -125,10 +155,11 @@ export const useMoviesStore = defineStore("movie", {
     async search(query) {
       this.loading = true;
       try {
-        this.movies = await searchMovies(query);
+        const results = await searchMovies(query);
+        this.movies = await this.filterMovies(results);
       } finally {
         this.loading = false;
       }
     },
-  }
+  },
 })
