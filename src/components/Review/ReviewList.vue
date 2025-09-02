@@ -1,15 +1,14 @@
 <template>
   <v-container>
-    <h2>レビュー一覧</h2>
-    <v-alert v-if="!movieReviews.length" type="info"
-      >まだレビュがありません</v-alert
-    >
-    <v-list v-else>
-      <v-list-item v-for="review in movieReviews" :key="review.id">
+    <v-progress-circular v-if="isLoading" indeterminate />
+    <v-alert v-if="error" type="error">{{ error }}</v-alert>
+    <h3>レビュー</h3>
+    <v-list>
+      <v-list-item v-for="review in reviews" :key="review.id">
         <v-list-item>
-          <v-list-item-title> ★{{ review.rating }} /5 </v-list-item-title>
+          <v-list-item-title> {{ review.author }} </v-list-item-title>
           <v-list-item-subtitle>
-            {{ review.comment }}
+            {{ review.content }}
           </v-list-item-subtitle>
         </v-list-item>
       </v-list-item>
@@ -18,21 +17,40 @@
 </template>
 
 <script setup>
-import { useReviewStore } from '@/stores/review';
+
 import { computed, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
+import { useReviewStore } from '@/stores/reviewStore';
+import { useRouter } from 'vue-router';
 
-const route = useRoute()
-const reviewStore = useReviewStore()
-
-onMounted(async() => {
-  if(!reviewStore.reviews.length){
-    await reviewStore.fetchReviews()
+const props = defineProps({
+  movieId: {
+    type: Number,
+    required: true,
+  },
+})
+const router = useRouter();
+const reviewStore = useReviewStore();
+const reviews = computed(() => reviewStore.reviews.results)
+const isLoading = computed(() => {
+  if(typeof reviewStore.loading === 'object'){
+    return reviewStore.loading ?? false;
   }
+  console.log('ReviewListのloading２', reviewStore.loading)
+  return reviewStore.loading;
+});
+
+const error = computed(() => {
+  return reviewStore.error ? reviewStore.error : null;
 })
 
-const movieReviews = computed(() =>
-reviewStore.getReviewByMovieId(Number(route.params.id)))
-</script>
+const navigateToMovie = (movieId) => {
+  router.push({name:'MovieDetail', params:{
+    id:movieId
+  }})
+}
 
-<style lang="scss" scoped></style>
+onMounted(async() => {
+    await reviewStore.fetchMovieReviews(props.movieId);
+    console.log('ReviewListのonMountedのreviews',reviews.value)
+})
+</script>

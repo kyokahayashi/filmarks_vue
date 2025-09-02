@@ -67,9 +67,10 @@ export const tmdbApi = {
   // レビューズ
   async getReviews(movieId, language = 'en-US', page = 1,) {
     const url = new URL(`${API_BASE_URL}/movie/${movieId}/reviews`);
-    url.searchParams.set('page', page.toString())
     url.searchParams.set('language', language);
+    url.searchParams.set('page', page.toString());
     const response = await fetch(url.toString(), createApiOptions());
+    console.log('getReviewsのurl', url)
     return handleApiResponse(response);
   },
   // fetch('https://api.themoviedb.org/3/movie/movie_id/reviews?language=en-US&page=1', options)

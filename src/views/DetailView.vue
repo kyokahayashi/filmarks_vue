@@ -148,9 +148,9 @@ watch(movieId, (newId) => {
 }, {immediate: true});
 
 // コンポーネントマウント時の処理（必要に応じて）
-onMounted(async() => {
-  console.log('DetailView mounted, movieId:', movieId.value);
-})
+// onMounted(async() => {
+//   console.log('DetailView mounted, movieId:', movieId.value);
+// })
 </script>
 
 <style scoped>
