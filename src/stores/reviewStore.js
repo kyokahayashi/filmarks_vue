@@ -15,7 +15,7 @@ export const useReviewStore = defineStore("review", {
       try {
         const data = await tmdbApi.getReviews(movieId);
         console.log('レビュー', data)
-        this.reviews = data
+        this.reviews = data.results
         return this.reviews;
       } catch (error) {
         this.error = error.message;
