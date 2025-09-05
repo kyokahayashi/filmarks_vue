@@ -121,7 +121,6 @@ const isLoading = computed(() => {
   if(typeof reviewStore.loading === 'object'){
     return reviewStore.loading ?? false;
   }
-  console.log('ReviewListのloading２', reviewStore.loading)
   return reviewStore.loading;
 });
 
@@ -152,7 +151,6 @@ const navigateToMovie = (movieId) => {
 
 onMounted(async() => {
     await reviewStore.fetchMovieReviews(props.movieId);
-    console.log('ReviewListのonMountedのreviews',reviews.value)
 })
 </script>
 

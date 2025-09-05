@@ -139,7 +139,6 @@ export const useMoviesStore = defineStore("movie", {
     async fetchMovieDetail(movieId) {
       this.loading.movieDetails = true;
       this.errors.movieDetails = null;
-      console.log('movieID', movieId)
       try {
         const data = await tmdbApi.getMovieDetails(movieId);
         this.selectedMovie = data;
