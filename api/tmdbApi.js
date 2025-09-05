@@ -1,5 +1,6 @@
 const API_BASE_URL = 'https://api.themoviedb.org/3';
 const API_TOKEN = import.meta.env.VITE_TMDB_API_TOKEN;
+const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
 
 const createApiOptions = (method = 'GET', body = null) => {
   const options = {
@@ -70,7 +71,6 @@ export const tmdbApi = {
     url.searchParams.set('language', language);
     url.searchParams.set('page', page.toString());
     const response = await fetch(url.toString(), createApiOptions());
-    console.log('getReviewsのurl', url)
     return handleApiResponse(response);
   },
   // fetch('https://api.themoviedb.org/3/movie/movie_id/reviews?language=en-US&page=1', options)
@@ -101,5 +101,17 @@ export const tmdbApi = {
   特定の映画の詳細を取得
    */
 
+  async searchMovies({ query, page = 1, year, include_adult = false }) {
+    const params = new URLSearchParams({
+      api_key: API_KEY,
+      language: 'ja-JP',
+      query,
+      page: page.toString(),
+      include_adult: include_adult.toString()
+    });
+    if (year) params.append('year', year.toString());
 
-}
+    const response = await fetch(`${API_BASE_URL}/search/movie?${params}`);
+    return await response.json();
+  }
+};

@@ -2,7 +2,7 @@
   <v-container>
     <v-progress-circular v-if="isLoading" indeterminate />
     <v-alert v-if="error" type="error">{{ error }}</v-alert>
-    <h3>{{ title }}</h3>
+    <h1 class="text-h3 text-primary mb-2">{{ title }}</h1>
     <v-row>
       <v-col
         v-for="movie in movies"
@@ -86,7 +86,7 @@ const error = computed(() => {
 const title = computed(() => {
   return {
     popular: '人気作品',
-    nowPlaying: '現在公開中',
+    nowPlaying: '公開中の作品',
     upcoming: '公開予定'
   }[props.movieType] ?? 'Movies'
 })

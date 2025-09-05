@@ -43,9 +43,6 @@ const onsubmit = () => {
   review.name = ''
   review.title = ''
   review.content = ''
-  review.rating = null
-
-  console.log('送信完了')
-}
+  review.rating = null}
 </script>
 <style lang="scss" scoped></style>
