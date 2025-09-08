@@ -1,5 +1,5 @@
 import { auth } from '@/firebase/config';
-import { createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword, signOut, updateProfile } from 'firebase/auth';
 import { defineStore } from 'pinia';
 
 export const useAuthStore = defineStore("auth", {
@@ -34,13 +34,17 @@ export const useAuthStore = defineStore("auth", {
       }
     },
     async logout() {
-      await signOut(auth);
-      this.user = null;
+      try {
+        await signOut(auth);
+        this.user = null;
+      } catch (err) {
+        this.error = err.message;
+      }
     },
     initAuth() {
       onAuthStateChanged(auth, (user) => {
         this.user = user;
       });
     }
-  }
+  },
 });
