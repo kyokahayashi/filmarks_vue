@@ -1,6 +1,7 @@
 <!-- CreateReviewView.vue -->
 <template>
-  <v-container>
+  <TopNavigation />
+  <v-container class="mt-10">
     <v-form @submit.prevent="onsubmit">
       <v-text-field label="名前" v-model="review.name" />
       <v-text-field label="タイトル" v-model="review.title" />
@@ -16,6 +17,7 @@
 </template>
 
 <script setup>
+import TopNavigation from '@/components/TopNavigation.vue'
 import { reactive } from 'vue'
 
 const emit = defineEmits(['review-submitted'])
