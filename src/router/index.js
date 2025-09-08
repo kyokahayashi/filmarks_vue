@@ -31,7 +31,12 @@ const router = createRouter({
       path: '/popular',
       name: 'Popular',
       component: () => import('@/views/PopularView.vue')
-    }
+    },
+    {
+      path: '/login',
+      name: 'Login',
+      component: () => import('@/views/LoginView.vue')
+    },
   ],
 })
 
