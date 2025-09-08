@@ -13,14 +13,24 @@ const router = createRouter({
     },
     {
       path: '/reviewForm',
-      name: 'reviewForm',
-      component: CreateReviewView,
+      name: 'ReviewForm',
+      component: () => import("@/views/CreateReviewView.vue"),
     },
     {
       path: '/movie/:id',
       name: 'MovieDetail',
       component: () => import("@/views/DetailView.vue"),
       props: true
+    },
+    {
+      path: '/search',
+      name: 'Search',
+      component: () => import('@/views/SearchContainerView.vue')
+    },
+    {
+      path: '/popular',
+      name: 'Popular',
+      component: () => import('@/views/PopularView.vue')
     }
   ],
 })
