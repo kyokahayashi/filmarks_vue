@@ -2,7 +2,7 @@
   <Header />
   <TopNavigation />
   <v-container class="d-flex justify-center">
-    <v-card class="pa-6" max-width="400">
+    <v-card class="pa-6" width="75%">
       <v-card-title>会員登録</v-card-title>
       <v-card-text>
         <v-text-field
@@ -11,7 +11,7 @@
           type="email"
           required
         />
-        <v-text-field v-model="password" label="password" required />
+        <v-text-field v-model="password" label="パスワード" required />
         <v-btn
           block
           color="primary"
@@ -26,6 +26,7 @@
       </v-card-text>
     </v-card>
   </v-container>
+  <br /><br /><br />
 </template>
 
 <script setup>

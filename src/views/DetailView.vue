@@ -1,4 +1,6 @@
 <template>
+  <Header />
+  <TopNavigation />
   <v-container>
     <!-- ローディング中 -->
     <div v-if="loading">
@@ -82,6 +84,8 @@ import { computed, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useMoviesStore } from '@/stores/movieStore';
 import ReviewList from '@/components/Review/ReviewList.vue';
+import Header from '@/components/Header.vue';
+import TopNavigation from '@/components/TopNavigation.vue';
 
 const route = useRoute();
 const router = useRouter();

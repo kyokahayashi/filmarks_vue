@@ -1,5 +1,12 @@
 <template>
-  <v-tabs v-model="tab" background-color="teal" dark grow fixed-tabs>
+  <v-tabs
+    v-model="tab"
+    background-color="teal"
+    dark
+    grow
+    fixed-tabs
+    class="mb-7"
+  >
     <v-tab to="/search">
       <v-icon start>mdi-movie-search</v-icon>
       映画を検索する
