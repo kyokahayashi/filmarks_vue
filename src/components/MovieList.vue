@@ -29,6 +29,26 @@
         </v-card>
       </v-col>
     </v-row>
+
+    <!-- 無限スクロール用のトリガー -->
+    <div
+      ref="loadMoreTrigger"
+      class="load-more-trigger"
+      style="height: 10px; margin: 20px 0;"
+    ></div>
+
+    <!-- 追加読み込み中のローディング表示 -->
+    <div v-if="isLoadingMore" class="text-center my-4">
+      <v-progress-circular indeterminate size="40" color="primary" />
+      <p class="mt-2">読み込み中...</p>
+    </div>
+
+    <!-- すべてのデータを読み込み完了時のメッセージ -->
+    <div v-if="!canLoadMore && movies.length > 0" class="text-center my-4">
+      <v-chip variant="outlined" color="grey">
+        すべての映画を表示しました
+      </v-chip>
+    </div>
   </v-container>
 </template>
 /** v-container:
@@ -47,7 +67,7 @@ v-card内：v-img
   useMoviesStore()でPiniaストアのインスタンス（リアクティブボブジェクト）を取得。テンプレート内でmovieStore.*を直接参照すれば自動的にリアクティブに再レンダリングされる。
  */
 import { useMoviesStore } from '@/stores/movieStore';
-import { onMounted, computed } from 'vue';
+import { onMounted, computed, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
 const props = defineProps({
@@ -55,6 +75,15 @@ const props = defineProps({
 });
 const router = useRouter();
 const movieStore = useMoviesStore();
+
+// テンプレート参照
+const loadMoreTrigger = ref(null);
+
+// 追加読み込み中かどうかの状態
+const isLoadingMore = ref(false);
+
+// Intersection Observer のインスタンス
+let observer = null;
 
 // propsで受け取る映画配列
 /* propsでmovieTypeを受け取る設計。
@@ -66,14 +95,15 @@ const movieStore = useMoviesStore();
 // computedによってstoreから必要データを派生している
 const movies = computed(() => {
   switch (props.movieType) {
-    case 'nowPlaying' : return movieStore.nowPlaying;
-    case 'upcoming' : return movieStore.upcoming;
+    case 'nowPlaying': return movieStore.nowPlaying;
+    case 'upcoming': return movieStore.upcoming;
     case 'popular':
     default: return movieStore.popular;
-  }});
+  }
+});
 
 const isLoading = computed(() => {
-  if(typeof movieStore.loading === 'object') {
+  if (typeof movieStore.loading === 'object') {
     return movieStore.loading[props.movieType] ?? false;
   }
   return movieStore.loading;
@@ -88,8 +118,12 @@ const title = computed(() => {
     popular: '人気作品',
     nowPlaying: '公開中の作品',
     upcoming: '公開予定'
-  }[props.movieType] ?? 'Movies'
-})
+  }[props.movieType] ?? 'Movies';
+});
+
+const canLoadMore = computed(() => {
+  return movieStore.canLoadMore(props.movieType);
+});
 
 
 // const popularMovies = computed(() => movieStore.popularMovies);
@@ -102,10 +136,11 @@ const navigateToDetail = (movieId) => {
   /* router.push()でプログラム上でルート(ページ)を遷移するメソッド
    * ルート定義でname:'MovieDetail'として登録されたルートを指定
     params:{id:movieId}でルートの動的セグメント:idに対応するパラメータとして値を渡す*/
-  router.push({name: 'MovieDetail', params:{
-    id: movieId
-  }})
-}
+  router.push({
+    name: 'MovieDetail',
+    params: { id: movieId }
+  });
+};
 const placeholder = '/placeholder-image.jpg';
 const getImageUrl = (posterPath) => posterPath ? `https://image.tmdb.org/t/p/w500${posterPath}` : placeholder;
 
@@ -127,15 +162,71 @@ const shortOverview = (text, n = 120) => {
   return text.length > n ? text.slice(0, n) + '...' : text;
 };
 
+// 無限スクロールのロード処理
+const loadMore = async () => {
+  if(isLoadingMore.value || !canLoadMore.value) return;
+
+  try {
+    isLoadingMore.value = true;
+    await movieStore.loadMoreMovies(props.movieType);
+  } catch (error) {
+    console.error('追加データの読み込みに失敗:', error);
+  } finally {
+    isLoadingMore.value = false;
+  }
+};
+
+// Intersection Observer のセットアップ
+const setupIntersectionObserver = () => {
+  if (!loadMoreTrigger.value) return;
+  observer = new IntersectionObserver(
+    (entries) => {
+      // トリガー要素が画面に入ったら追加読み込み
+      if (entries[0].isIntersecting && canLoadMore.value && !isLoadingMore.value) {
+        loadMore();
+      }
+    },
+    {
+      // ルートマージン（トリガーをより早く発動させるため）
+      rootMargin: '100px',
+      threshold: 0.1
+    }
+  );
+
+  observer.observe(loadMoreTrigger.value);
+};
+
+// Intersection Observer のクリーンアップ
+const cleanupIntersectionObserver = () => {
+  if (observer) {
+    observer.disconnect();
+    observer = null;
+  }
+};
+
+// 初期データの読み込み
+
 onMounted(async () => {
   // props.movieTypeに応じて必要なデータのみ取得
   try{
     if (props.movieType === 'popular') await movieStore.fetchPopularMovies();
     else if (props.movieType === 'nowPlaying') await movieStore.fetchNowPlayingMovies();
     else if (props.movieType === 'upcoming') await movieStore.fetchUpcomingMovies();
-  }catch(e) {
+    // DOM更新後にIntersection Observerをセットアップ
+    setTimeout(setupIntersectionObserver, 100);
+  } catch (error) {
     //　エラーのログを残す
-    console.error('fetch error', e);
+    console.error('初期データの取得に失敗:', error);
   }
-})
+});
+// コンポーネント破棄時のクリーンアップ
+onUnmounted(() => {
+  cleanupIntersectionObserver();
+});
 </script>
+
+<style scoped>
+.load-more-trigger{
+  background-color: rgba(0, 0, 0, 0.1);
+}
+</style>

@@ -11,6 +11,24 @@ export const useMoviesStore = defineStore("movie", {
       // 単体の映画データ
       selectedMovie: null,
 
+      // ページネーション情報
+      pagination: {
+        nowPlaying: {
+          currentPage: 0,
+          totalPages: 0,
+          hasNextPage: true
+        },
+        popular: {
+          currentPage: 0,
+          totalPages: 0,
+          hasNextPage: true
+        },
+        upcoming: {
+          currentPage: 0,
+          totalPages: 0,
+          hasNextPage: true
+        }
+      },
       // ローディング状態
       loading: {
         nowPlaying: false,
@@ -35,6 +53,11 @@ export const useMoviesStore = defineStore("movie", {
     isAnyLoading: (state) => Object.values(state.loading).some(loading => loading),
     // エラーがあるかチェック
     hasAnyError: (state) => Object.values(state.errors).some(error => error !== null),
+
+    // 無限スクロール
+    canLoadMore: (state) => (movieType) => {
+      return state.pagination[movieType]?.hasNextPage && !state.loading[movieType];
+    },
   },
   actions: {
     // ロマンス映画を除外するヘルパーメソッド
@@ -53,6 +76,43 @@ export const useMoviesStore = defineStore("movie", {
       });
     },
 
+    // ページネーション情報を更新するヘルパーメソッド
+    updatePagination(movieType, data) {
+      this.pagination[movieType] = {
+        currentPage: data.page,
+        totalPages: data.total_pages,
+        hasNextPage: data.page < data.total_pages
+      };
+    },
+
+    // 無限スクロール用のロードメソッド(最大リトライ回数制限付き)
+    async loadMoreMovies(movieType, maxRetries = 3) {
+      if (!this.canLoadMore(movieType)) return;
+
+      const nextPage = this.pagination[movieType].currentPage + 1;
+      let retryCount = 0;
+
+      const tryLoadPage = async (page) => {
+        switch (movieType) {
+          case 'nowPlaying':
+            return await this.fetchNowPlayingMovies(page, true);
+          case 'popular':
+            return await this.fetchPopularMovies(page, true);
+          case 'upcoming':
+            return await this.fetchUpcomingMovies(page, true);
+            fault:
+            throw new Error(`不明なmovie Type: ${movieType}`);
+        }
+      };
+      try {
+        const result = await tryLoadPage(nextPage);
+        return result;
+      } catch (error) {
+        // APIエラーの場合はリトライせず、そのまま投げる
+        throw error;
+      }
+    },
+
     async fetchNowPlayingMovies(page = 1, append = false) {
       this.loading.nowPlaying = true;
       this.errors.nowPlaying = null;
@@ -69,6 +129,8 @@ export const useMoviesStore = defineStore("movie", {
           // フィルタリングして設定
           this.nowPlaying = this.filterMovies(data.results);
         }
+        // ページネーション情報を更新
+        this.updatePagination('nowPlaying', data);
         // フィルタリンゴのデータを含むオブジェクトを返す
         return {
           ...data,
@@ -98,6 +160,9 @@ export const useMoviesStore = defineStore("movie", {
         } else {
           this.popular = this.filterMovies(data.results);
         }
+        // ページネーション情報を更新
+        this.updatePagination('popular', data);
+
         return {
           ...data,
           results: this.popular
@@ -124,7 +189,13 @@ export const useMoviesStore = defineStore("movie", {
         } else {
           this.upcoming = this.filterMovies(data.results);
         }
-        return data;
+
+        // ページネーション情報を更新
+        this.updatePagination('upcoming', data);
+        return {
+          ...data,
+          results: this.upcoming
+        };
       } catch (error) {
         this.errors.upcoming = error.message;
         console.error('公開予定映画の取得に失敗:', error);
@@ -160,5 +231,16 @@ export const useMoviesStore = defineStore("movie", {
         this.loading = false;
       }
     },
+
+    // データをリセットするメソッド（必要に応じて）
+    resetMovieData(movieType) {
+      this[movieType] = [];
+      this.pagination[movieType] = {
+        currentPage: 0,
+        totalPages: 0,
+        hasNextPage: true
+      };
+      this.errors[movieType] = null;
+    }
   },
 })
