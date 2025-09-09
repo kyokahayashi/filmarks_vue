@@ -2,7 +2,7 @@
   <Header />
   <TopNavigation />
   <v-container class="d-flex justify-center mt-6">
-    <v-card class="pa-6" max-width="400">
+    <v-card class="pa-6" width="75%">
       <v-card-title>ログイン</v-card-title>
       <v-card-text>
         <v-text-field v-model="email" label="メールアドレス" />
@@ -20,15 +20,23 @@
           メールアドレスまたはパスワードがことなります。
         </p>
       </v-card-text>
+      <v-card-text>
+        <v-btn variant="text" block @click="resetPassword(email)" color="blue">
+          パスワードを忘れましたか？
+        </v-btn>
+      </v-card-text>
     </v-card>
   </v-container>
+  <br /><br /><br />
 </template>
 
 <script setup>
 import Header from '@/components/Header.vue';
 import TopNavigation from '@/components/TopNavigation.vue';
+import { auth } from '@/firebase/config';
 import router from '@/router';
 import { useAuthStore } from '@/stores/authStore';
+import { sendPasswordResetEmail } from 'firebase/auth';
 import { ref } from 'vue';
 
 const email = ref("");
@@ -39,6 +47,19 @@ const login = async () => {
   await authStore.login(email.value, password.value);
   router.push('/')
 };
+
+const resetPassword = async (email) => {
+  if(!email) {
+    alert("メールアドレスを入力してください")
+    return;
+  }
+  try {
+    await sendPasswordResetEmail(auth, email);
+    alert("パスワードリセット用のメールを送信しました。")
+  } catch (err) {
+    alert ("エラー：" + err.message);
+  }
+}
 </script>
 
 <style lang="scss" scoped></style>
