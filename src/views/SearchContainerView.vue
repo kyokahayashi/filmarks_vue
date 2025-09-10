@@ -2,339 +2,286 @@
   <Header />
   <TopNavigation />
   <v-container fluid class="pa-4">
-    <!-- ページヘッダー -->
-    <v-row class="mb-6">
-      <v-col cols="12">
-        <div class="text-center">
-          <h1 class="text-h3 text-primary mb-2">
-            <v-icon size="large" class="me-3">mdi-movie-search</v-icon>
-            映画検索
-          </h1>
-          <p class="text-h6 text-grey-darken-1">お気に入りの映画を見つけよう</p>
-        </div>
-      </v-col>
-    </v-row>
-
-    <!-- 検索コンポーネント -->
-    <v-row class="mb-6">
-      <v-col cols="12" lg="8" offset-lg="2">
-        <TextSearch
-          :loading="isLoading"
-          @search="handleSearch"
-          @clear="handleClear"
-          ref="textSearchRef"
-        />
-        <!-- @searchは子コンポーネントからemitを受信 -->
-      </v-col>
-    </v-row>
-    <!-- 検索結果セクション -->
-    <v-row v-if="searchResults.length > 0 || hasSearched">
-      <v-col cols="12">
-        <!-- 結果ヘッダー -->
-        <div class="d-flex align-center justify-space-between mb-4">
-          <h2 class="text-h5">
-            <v-icon class="me-2">mdi-movie-roll</v-icon>
-            検索結果
-            <v-chip
-              v-if="totalResults > 0"
-              color="primary"
-              variant="outlined"
-              class="ms-3"
-            >
-              {{ totalResults }}件
-            </v-chip>
-          </h2>
-
-          <!-- 表示形式切り替え -->
-          <v-btn-toggle
-            v-model="viewMode"
-            variant="outlined"
-            color="primary"
-            mandatory
-          >
-            <v-btn value="grid" size="small">
-              <v-icon>mdi-view-grid</v-icon>
-            </v-btn>
-            <v-btn value="list" size="small">
-              <v-icon>mdi-view-list</v-icon>
-            </v-btn>
-          </v-btn-toggle>
-        </div>
-
-        <!-- 検索結果なしの場合 -->
-        <v-card
-          v-if="hasSearched && searchResults.length === 0 && !isLoading"
-          class="text-center pa-8"
-          elevation="2"
-        >
-          <v-icon size="64" color="grey-lighten-1" class="mb-4">
-            mdi-movie-off-outline
-          </v-icon>
-          <h3 class="text-h6 mb-2">映画が見つかりませんでした</h3>
-          <p class="text-grey-darken-1 mb-4">
-            検索条件を変更してもう一度お試しください
-          </p>
-          <v-btn color="primary" @click="handleClear" variant="outlined">
-            検索をリセット
-          </v-btn>
-        </v-card>
-
-        <!-- グリッド表示 -->
-        <v-row v-else-if="viewMode === 'grid'">
-          <v-col
-            v-for="movie in searchResults"
-            :key="movie.id"
-            cols="12"
-            sm="6"
-            md="4"
-            lg="3"
-            xl="2"
-          >
-            <DetailView
-              :movie="movie"
-              @click="navigateToMovieDetail(movie.id)"
-            />
-          </v-col>
-        </v-row>
-
-        <!-- リスト表示 -->
-        <v-card v-else-if="viewMode === 'list'" elevation="2">
-          <v-list>
-            <template v-for="(movie, index) in searchResults" :key="movie.id">
-              <v-list-item
-                @click="navigateToMovieDetail(movie.id)"
-                class="movie-list-item"
+    <!-- 検索フォーム -->
+    <v-card class="mb-6" elevation="2">
+      <v-card-text>
+        <v-form @submit.prevent="handleSearch">
+          <v-row align="center">
+            <v-col cols="12" md="6">
+              <v-text-field
+                v-model="searchQuery"
+                label="映画を検索"
+                placeholder="映画のタイトルを入力してください"
+                prepend-icon="mdi-magnify"
+                variant="outlined"
+                clearable
+                :loading="movieStore.loading.search"
+                @keyup.enter="handleSearch"
+              />
+            </v-col>
+            <v-col cols="12" md="3">
+              <v-btn
+                type="submit"
+                color="primary"
+                size="large"
+                :loading="movieStore.loading.search"
+                :disabled="!searchQuery?.trim()"
+                block
               >
-                <template #prepend>
-                  <v-avatar size="80" rounded="lg" class="me-4">
-                    <v-img
-                      v-if="movie.poster_path"
-                      :src="getImageUrl(movie.poster_path, 'w154')"
-                      :alt="movie.title"
-                      cover
-                    />
-                    <v-icon v-else size="40" color="grey">mdi-movie</v-icon>
-                  </v-avatar>
-                </template>
-                <v-list-item-title class="text-h6 mb-1">
-                  {{ movie.title }}
-                  <v-chip
-                    v-if="movie.release_date"
-                    size="small"
-                    variant="outlined"
-                    color="primary"
-                    class="ms-2"
-                  >
-                    {{ new Date(movie.release_date).getFullYear() }}
-                  </v-chip>
-                </v-list-item-title>
-                <v-list-item-subtitle class="text-body-2 mb-2">
-                  {{ truncateText(movie.overview, 150) }}
-                </v-list-item-subtitle>
-                <template #append>
-                  <div class="d-flex flex-column align-end">
-                    <v-rating
-                      v-if="movie.vote_average > 0"
-                      :model-value="movie.vote_average / 2"
-                      color="amber"
-                      density="compact"
-                      size="small"
-                      readonly
-                      half-increments
-                      class="mb-1"
-                    />
-                    <v-chip size="small" color="success" variant="outlined">
-                      {{ movie.vote_average?.toFixed(1) || 'N/A' }}
-                    </v-chip>
-                  </div>
-                </template>
-              </v-list-item>
-              <v-divider v-if="index < searchResults.length - 1" />
-            </template>
-          </v-list>
-        </v-card>
+                <v-icon start>mdi-magnify</v-icon>
+                検索
+              </v-btn>
+            </v-col>
+            <v-col cols="12" md="3">
+              <v-btn variant="outlined" @click="toggleFilters" block>
+                <v-icon start>mdi-filter</v-icon>
+                フィルター
+                <v-icon end>
+                  {{ showFilters ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon
+                >
+              </v-btn>
+            </v-col>
+          </v-row>
 
-        <!-- ページネーション -->
-        <v-row v-if="totalPages > 1" class="mt-6">
-          <v-col cols="12" class="d-flex justify-center">
-            <v-pagination
-              v-model="currentPage"
-              :length="Math.min(totalPages, 500)"
-              :total-visible="7"
-              @update:model-value="handlePageChange"
-              color="primary"
-            />
-          </v-col>
-        </v-row>
-      </v-col>
-    </v-row>
-    <!-- ローディング表示 -->
-    <v-row v-if="isLoading" class="mt-8">
-      <v-col cols="12" class="text-center">
-        <v-progress-circular
-          indeterminate
-          color="primary"
-          size="64"
-          class="mb-4"
-        />
-        <p class="text-h6">映画を検索しています</p>
-      </v-col>
-    </v-row>
+          <!-- フィルター -->
+          <v-expand-transition>
+            <div v-show="showFilters">
+              <v-divider class="my-4"></v-divider>
+              <v-row>
+                <v-col cols="12" md="4">
+                  <v-text-field
+                    v-model="filters.year"
+                    label="公開年"
+                    type="number"
+                    variant="outlined"
+                    :min="1900"
+                    :max="new Date().getFullYear() + 5"
+                    clearable
+                  />
+                </v-col>
+                <v-col cols="12" md="4">
+                  <v-select
+                    v-model="filters.genre"
+                    :items="genreItems"
+                    label="ジャンル"
+                    variant="outlined"
+                    clearable
+                  />
+                </v-col>
+                <v-col cols="12" md="4">
+                  <v-range-slider
+                    v-model="filters.rating"
+                    label="評価"
+                    :min="0"
+                    :max="10"
+                    :step="0.1"
+                    thumb-label="always"
+                    class="mt-6"
+                  />
+                </v-col>
+              </v-row>
+            </div>
+          </v-expand-transition>
+        </v-form>
+      </v-card-text>
+    </v-card>
+
+    <!-- 検索履歴 -->
+    <v-card
+      v-if="movieStore.recentSearchHistory.length > 0 && !movieStore.currentSearchQuery"
+      class="mb-6"
+      elevation="1"
+    >
+      <v-card-title class="text-h6">
+        <v-icon start>mdi-history</v-icon>
+        検索履歴
+        <v-spacer></v-spacer>
+        <v-btn
+          size="small"
+          variant="text"
+          @click="movieStore.clearSearchHistory"
+        >
+          クリア
+        </v-btn>
+      </v-card-title>
+      <v-card-text>
+        <v-chip-group column>
+          <v-chip
+            v-for="query in movieStore.recentSearchHistory"
+            :key="query"
+            variant="outlined"
+            closable
+            @click="searchFromHistory(query)"
+            @click:close="movieStore.removeFromSearchHistory(query)"
+          >
+            {{ query }}
+          </v-chip>
+        </v-chip-group>
+      </v-card-text>
+    </v-card>
+
+    <!-- 検索結果のヘッダー -->
+    <div v-if="movieStore.currentSearchQuery" class="mb-4">
+      <h2 class="text-h4 mb-2">
+        「{{ movieStore.currentSearchQuery }}」の検索結果
+      </h2>
+      <p class="text-subtitle-1 text-medium-emphasis">
+        {{ movieStore.searchResults.length }}件の映画が見つかりました
+      </p>
+      <v-btn variant="outlined" size="small" @click="clearSearch" class="mt-2">
+        <v-icon start>mdi-close</v-icon>
+        検索をクリア
+      </v-btn>
+    </div>
 
     <!-- エラー表示 -->
     <v-alert
-      v-if="error"
+      v-if="movieStore.errors.search"
       type="error"
       variant="tonal"
+      class="mb-4"
       closable
-      class="mt-4"
-      @click:close="error = null"
+      @click:close="movieStore.errors.search = null"
     >
-      {{ error }}
+      {{ movieStore.errors.search }}
     </v-alert>
+
+    <!-- ローディング -->
+    <div v-if="movieStore.loading.search" class="text-center py-12">
+      <v-progress-circular size="64" color="primary" indeterminate />
+      <p class="text-h6 mt-4">検索中...</p>
+    </div>
+
+    <!-- 検索結果なし -->
+    <v-card
+      v-else-if="movieStore.currentSearchQuery && movieStore.searchResults.length === 0"
+      class="text-center py-12"
+    >
+      <v-card-text>
+        <v-icon size="64" color="grey">mdi-movie-search-outline</v-icon>
+        <h3 class="text-h5 mt-4 mb-2">検索結果が見つかりません</h3>
+        <p class="text-body-1 text-medium-emphasis">
+          別のキーワードで検索してみてください
+        </p>
+      </v-card-text>
+    </v-card>
+
+    <!-- 検索結果の映画一覧 -->
+    <v-row v-else-if="movieStore.searchResults.length > 0">
+      <v-col
+        v-for="movie in movieStore.searchResults"
+        :key="movie.id"
+        cols="12"
+        sm="6"
+        md="4"
+        lg="3"
+      >
+        <MovieCard :movie="movie" @click="goToMovieDetail(movie.id)" />
+      </v-col>
+    </v-row>
+    <!-- デフォルト状態（検索前） -->
+    <v-card v-else class="text-center py-12">
+      <v-card-text>
+        <v-icon size="64" color="primary">mdi-movie-search</v-icon>
+        <h3 class="text-h5 mt-4 mb-2">映画を検索してください</h3>
+        <p class="text-body-1 text-medium-emphasis">
+          上の検索フォームに映画のタイトルを入力してください
+        </p>
+      </v-card-text>
+    </v-card>
   </v-container>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import MovieCard from '@/components/movie/MovieCard.vue';
+import { useMoviesStore } from '@/stores/movieStore';
+import { onMounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
-// import SearchResults from './SearchResults.vue';
-
-import { tmdbApi } from './../../api/tmdbApi';
-import { onMounted } from 'vue';
-// import MovieCard from '../MovieCard.vue';
-import DetailView from '@/views/DetailView.vue';
-import TextSearch from '@/components/Search/TextSearch.vue';
-import TopNavigation from '@/components/TopNavigation.vue';
-import Header from '@/components/Header.vue';
+import { tmdbApi } from '../../api/tmdbApi';
+import Header from '@/components/common/Header.vue';
+import TopNavigation from '@/components/common/TopNavigation.vue';
 
 const router = useRouter();
+const movieStore = useMoviesStore();
 
-const isLoading = ref(false);
-const error = ref(null);
-const searchResults = ref([]);
-const totalResults = ref(0);
-const totalPages = ref(0);
-const currentPage = ref(1);
-const hasSearched = ref(false);
-const viewMode = ref('grid');
-const currentSearchParams = ref(null);
-const textSearchRef = ref(null);
+// リアクティブデータ
+const searchQuery = ref('');
+const showFilters = ref(false);
+const genreItems = ref([]);
 
-// 計算プロパティ
-const hasResults = computed(() => searchResults.value.length > 0);
+// フィルター
+const filters = reactive({
+  year: null,
+  genre: null,
+  rating: [0, 10]
+});
 
 // メソッド
-const handleSearch = async (searchParams) => {
+const handleSearch = async () => {
+  if (!searchQuery.value?.trim()) return;
+
   try {
-    isLoading.value = true;
-    error.value = null;
-    currentPage.value = 1;
-    currentSearchParams.value = searchParams;
-    hasSearched.value = true;
+    const searchFilters = {};
+    if (filters.year) searchFilters.year = parseInt(filters.year);
+    if (filters.genre) searchFilters.with_genres = filters.genre;
+    if (filters.rating[0] > 0) searchFilters['vote_average.gte'] = filters.rating[0];
+    if (filters.rating[1] < 10) searchFilters['vote_average.lte'] = filters.rating[1];
 
-    console.log('検索パラメータ:', searchParams);
-
-    // TMDB APIで検索実行
-    const response = await tmdbApi.searchMovies({
-      query: searchParams.query,
-      page: currentPage.value,
-      ...(searchParams.year && { year:searchParams.year}),
-      include_adult: searchParams.include_adult || false
-    });
-    searchResults.value = response.results || [];
-    totalResults.value = response.total_results || 0;
-    totalPages.value = response.total_pages || 0;
-
-    // TextSearchコンポーネントに結果を通知
-    if(textSearchRef.value) {
-      textSearchRef.value.updateSearchResults(response)
-    }
-    console.log('検索結果:', response);
-  } catch (err) {
-    console.error('検索エラー:', err);
-    error.value = '検索中にエラーが発生しました。もう一度お試しください。';
-    searchResults.value = [];
-    totalResults.value = 0;
-  } finally {
-    isLoading.value = false;
+    await movieStore.searchMovies(searchQuery.value, searchFilters);
+  } catch (error) {
+    console.error('検索エラー:', error);
   }
 };
 
-const handleClear = () => {
-  searchResults.value = [];
-  totalResults.value = 0;
-  totalPages.value = 0;
-  currentPage.value = 1;
-  hasSearched.value = false;
-  error.value = null;
-  currentSearchParams.value = null;
+const searchFromHistory = (query) => {
+  searchQuery.value = query;
+  handleSearch();
+}
+
+const clearSearch = () => {
+  searchQuery.value = '';
+  movieStore.clearSearchResults();
 };
-const handlePageChange = async (page) => {
-    if (!currentSearchParams.value) return;
 
-    try {
-      isLoading.value = true;
-      error.value = null;
+const toggleFilters = () => {
+  showFilters.value = !showFilters.value;
+};
 
-      const response = await tmdbApi.searchMovies({
-        ...currentSearchParams.value,
-        page: page
-      });
+const goToMovieDetail = (movieId) => {
+  router.push({ name: 'MovieDetail', params: { id: movieId } });
+};
 
-      searchResults.value = response.results || [];
-      currentPage.value = page;
-
-      // ページトップにスクロール
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-
-    } catch (err) {
-      console.error('ページ変更エラー:', err);
-      error.value = 'ページの読み込み中にエラーが発生しました。';
-    } finally {
-      isLoading.value = false;
+// ジャンル一覧を取得
+const loadGenres = async () => {
+  try {
+    const response = await tmdbApi.getGenres();
+    genreItems.value = response.genres.map(genre => ({
+      title: genre.name,
+      value: genre.id
+    }));
+  } catch (error) {
+    console.error('ジャンル取得エラー:', error);
   }
 };
 
-const navigateToMovieDetail = (movieId) => {
-  router.push({name: 'MovieDetail', params: {id: movieId}})
+// URL　パラメータから検索クエリを取得
+const initializeFromQuery = () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const query = urlParams.get('q');
+  if(query) {
+    searchQuery.value = query;
+    handleSearch();
+  }
 };
 
-const getImageUrl = (path, size = 'w500') => {
-  if (!path) return '';
-  return `https://image.tmdb.org/t/p/${size}${path}`;
-};
-
-const truncateText = (text, maxLength) => {
-  if (!text) return '';
-  if (text.length <= maxLength) return text;
-  return text.substring(0, maxLength) + '...';
-};
-
-// ページ読み込み時の処理
 onMounted(() => {
-  console.log('SearchContainer mounted');
+  loadGenres();
+  initializeFromQuery();
 });
 </script>
 
 <style lang="scss" scoped>
-.movie-list-item {
+.v-chip {
   cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.movie-list-item:hover {
-  background-color: rgba(var(--v-theme-primary), 0.04);
-}
-.v-card {
-  transition: transform 0.2s ease-in-out;
-}
-
-.v-card:hover {
-  transform: translateY(-2px);
-}
-
-.v-pagination {
-  margin-top: 2rem;
 }
 </style>

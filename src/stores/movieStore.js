@@ -8,6 +8,12 @@ export const useMoviesStore = defineStore("movie", {
       nowPlaying: [],
       popular: [],
       upcoming: [],
+      // 検索結果
+      searchResults: [],
+      // 検索履歴
+      searchHistory: JSON.parse(localStorage.getItem('movieSearchHistory') || '[]'),
+      // 検索クエリ
+      currentSearchQuery: '',
       // 単体の映画データ
       selectedMovie: null,
 
@@ -35,6 +41,7 @@ export const useMoviesStore = defineStore("movie", {
         popular: false,
         upcoming: false,
         movieDetails: false,
+        search: false, // 検索用ローディング状態を追加
       },
 
       // エラー状態
@@ -43,6 +50,7 @@ export const useMoviesStore = defineStore("movie", {
         popular: null,
         upcoming: null,
         movieDetails: null,
+        search: null, // 検索用エラー状態を追加
       },
       // 除外するジャンルID（romance=10749）
       EXCLUDED_GENRE_IDS: [10749]
@@ -57,6 +65,11 @@ export const useMoviesStore = defineStore("movie", {
     // 無限スクロール
     canLoadMore: (state) => (movieType) => {
       return state.pagination[movieType]?.hasNextPage && !state.loading[movieType];
+    },
+
+    // 検索履歴を最新順で取得（最大10件）
+    recentSearchHistory: (state) => {
+      return state.searchHistory.slice(0, 10);
     },
   },
   actions: {
@@ -85,6 +98,77 @@ export const useMoviesStore = defineStore("movie", {
       };
     },
 
+    // 検索履歴に追加
+    addToSearchHistory(query) {
+      if (!query || query.trim() === '') return;
+
+      const trimmedQuery = query.trim();
+      // 既存の履歴から同じクエリを削除（重複回避）
+      this.searchHistory = this.searchHistory.filter(item => item !== trimmedQuery);
+      // 戦闘に新しいクエリを追加
+      this.searchHistory.unshift(trimmedQuery);
+      // 最大20件まで保持
+      this.searchHistory = this.searchHistory.slice(0, 20);
+      // ローカルストレージに保存
+      localStorage.setItem('movieSearchHistory', JSON.stringify(this.searchHistory));
+    },
+    // 検索履歴を削除
+    removeFromSearchHistory(query) {
+      this.searchHistory = this.searchHistory.filter(item => item !== query);
+      localStorage.setItem('movieSearchHistory', JSON.stringify(this.searchHistory));
+    },
+    // 検索履歴をクリア
+    clearSearchHistory() {
+      this.searchHistory = [];
+      localStorage.removeItem('movieSearchHistory');
+    },
+
+    // 映画を検索
+    async searchMovies(query, filters = {}) {
+      if (!query || query.trim() === '') {
+        this.searchResults = [];
+        console.log('searchResults', this.searchResults)
+        this.currentSearchQuery = '';
+        return;
+      }
+
+      this.loading.search = true;
+      this.errors.search = null;
+      this.currentSearchQuery = query.trim();
+      try {
+        const searchParams = {
+          query: this.currentSearchQuery,
+          ...filters
+        };
+        const data = await tmdbApi.searchMovies(searchParams);
+
+        // 検索結果をフィルタリング
+        this.searchResults = this.filterMovies(data.results || []);
+        console.log('SearchResults:', this.searchResults)
+
+        // 検索履歴に追加
+        this.addToSearchHistory(this.currentSearchQuery);
+
+        return {
+          ...data,
+          results: this.searchResults
+        };
+      } catch (error) {
+        this.errors.search = error.message;
+        console.error('映画検索に失敗:', error);
+        throw error;
+      } finally {
+        this.loading.search = false;
+      }
+    },
+
+    // 検索結果をクリア
+    clearSearchResults() {
+      this.searchResults = [];
+      this.currentSearchQuery = '';
+      this.errors.search = null;
+    },
+
     // 無限スクロール用のロードメソッド(最大リトライ回数制限付き)
     async loadMoreMovies(movieType, maxRetries = 3) {
       if (!this.canLoadMore(movieType)) return;
@@ -100,7 +184,7 @@ export const useMoviesStore = defineStore("movie", {
             return await this.fetchPopularMovies(page, true);
           case 'upcoming':
             return await this.fetchUpcomingMovies(page, true);
-            fault:
+          default:
             throw new Error(`不明なmovie Type: ${movieType}`);
         }
       };
@@ -220,15 +304,6 @@ export const useMoviesStore = defineStore("movie", {
         throw error;
       } finally {
         this.loading.movieDetails = false;
-      }
-    },
-    async search(query) {
-      this.loading = true;
-      try {
-        const results = await searchMovies(query);
-        this.movies = await this.filterMovies(results);
-      } finally {
-        this.loading = false;
       }
     },
 

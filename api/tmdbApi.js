@@ -101,17 +101,44 @@ export const tmdbApi = {
   特定の映画の詳細を取得
    */
 
-  async searchMovies({ query, page = 1, year, include_adult = false }) {
-    const params = new URLSearchParams({
-      api_key: API_KEY,
-      language: 'ja-JP',
-      query,
-      page: page.toString(),
-      include_adult: include_adult.toString()
-    });
-    if (year) params.append('year', year.toString());
+  // 映画検索メソッド
+  async searchMovies({
+    query,
+    page = 1,
+    year,
+    include_adult = false,
+    language = 'ja-JP',
+    // フィルター用の追加パラメータ
+    with_genres,
+    'vote_average.gte': voteAverageGte,
+    'vote_average.lte': voteAverageLte,
+    primary_release_year
+  } = {}) {
+    const url = new URL(`${API_BASE_URL}/search/movie`);
 
-    const response = await fetch(`${API_BASE_URL}/search/movie?${params}`);
-    return await response.json();
+    // 基本パラメータ
+    url.searchParams.set('query', query);
+    url.searchParams.set('page', page.toString());
+    url.searchParams.set('language', language);
+    url.searchParams.set('include_adult', include_adult.toString());
+
+    // オプショナルパラメータ
+    if (year) url.searchParams.set('year', year.toString());
+    if (primary_release_year) url.searchParams.set('primary_release_year', primary_release_year.toString());
+    if (with_genres) url.searchParams.set('with_genres', with_genres);
+    if (voteAverageGte) url.searchParams.set('vote_average.gte', voteAverageGte.toString());
+    if (voteAverageLte) url.searchParams.set('vote_average.lte', voteAverageLte.toString());
+
+    const response = await fetch(url.toString(), createApiOptions());
+    return handleApiResponse(response);
+  },
+
+  // ジャンル一覧を取得するメソッド（フィルター用）
+  async getGenres(language = 'ja-JP') {
+    const url = new URL(`${API_BASE_URL}/genre/movie/list`);
+    url.searchParams.set('language', language);
+
+    const response = await fetch(url.toString(), createApiOptions());
+    return handleApiResponse(response);
   }
 };

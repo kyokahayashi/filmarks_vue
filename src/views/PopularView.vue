@@ -5,9 +5,9 @@
 </template>
 
 <script setup>
-import Header from '@/components/Header.vue';
-import MovieList from '@/components/MovieList.vue';
-import TopNavigation from '@/components/TopNavigation.vue';
+import Header from '@/components/common/Header.vue';
+import MovieList from '@/components/movie/MovieList.vue';
+import TopNavigation from '@/components/common/TopNavigation.vue';
 </script>
 
 <style lang="scss" scoped></style>

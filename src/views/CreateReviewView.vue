@@ -17,7 +17,7 @@
 </template>
 
 <script setup>
-import TopNavigation from '@/components/TopNavigation.vue'
+import TopNavigation from '@/components/common/TopNavigation.vue'
 import { reactive } from 'vue'
 
 const emit = defineEmits(['review-submitted'])

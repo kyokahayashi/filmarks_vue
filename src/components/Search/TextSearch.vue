@@ -54,13 +54,13 @@
             />
           </v-col>
           <v-col cols="12" md="6">
-            <v-switch
+            <!-- <v-switch
               v-model="includeAdult"
               label="成人向けコンテンツを含む"
               color="primary"
               hide-details
               density="compact"
-            />
+            /> -->
           </v-col>
         </v-row>
 
@@ -139,6 +139,7 @@
           >
             <v-icon start>mdi-information</v-icon>
             「{{lastSearchQuery
+
 
 
 
