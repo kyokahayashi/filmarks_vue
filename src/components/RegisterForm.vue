@@ -33,8 +33,8 @@
 import { useAuthStore } from '@/stores/authStore';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import TopNavigation from './TopNavigation.vue';
-import Header from './Header.vue';
+import TopNavigation from '@/components/common/TopNavigation.vue';
+import Header from '@/components/common/Header.vue';
 
 const email = ref("");
 const password = ref("");

@@ -31,8 +31,8 @@
 </template>
 
 <script setup>
-import Header from '@/components/Header.vue';
-import TopNavigation from '@/components/TopNavigation.vue';
+import Header from '@/components/common/Header.vue';
+import TopNavigation from '@/components/common/TopNavigation.vue';
 import { auth } from '@/firebase/config';
 import router from '@/router';
 import { useAuthStore } from '@/stores/authStore';
