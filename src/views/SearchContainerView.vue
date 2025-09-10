@@ -1,4 +1,6 @@
 <template>
+  <Header />
+  <TopNavigation />
   <v-container fluid class="pa-4">
     <!-- 検索フォーム -->
     <v-card class="mb-6" elevation="2">
@@ -196,6 +198,8 @@ import { useMoviesStore } from '@/stores/movieStore';
 import { onMounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { tmdbApi } from '../../api/tmdbApi';
+import Header from '@/components/common/Header.vue';
+import TopNavigation from '@/components/common/TopNavigation.vue';
 
 const router = useRouter();
 const movieStore = useMoviesStore();
