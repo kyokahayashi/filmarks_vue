@@ -25,7 +25,7 @@
                 color="primary"
                 size="large"
                 :loading="movieStore.loading.search"
-                :disabled="!searchQuery?.trim()"
+                :disabled="!searchQuery?.trim() && !filters.genre && !filters.year && (filters.rating[0] === 0 && filters.rating[1] === 10)"
                 block
               >
                 <v-icon start>mdi-magnify</v-icon>
@@ -66,6 +66,7 @@
                     label="ジャンル"
                     variant="outlined"
                     clearable
+                    :return-object="false"
                   />
                 </v-col>
                 <v-col cols="12" md="4">
@@ -218,16 +219,29 @@ const filters = reactive({
 
 // メソッド
 const handleSearch = async () => {
-  if (!searchQuery.value?.trim()) return;
+  const hasSearchQuery = searchQuery.value?.trim().length > 0;
+  const hasFilters = filters.genre || filters.year || filters.rating[0] > 0 || filters.rating[1] < 10;
+  if (!hasSearchQuery && !hasFilters) return;
 
+  // if (!searchQuery.value?.trim() && !filters.genre && !filters.year ) return;
+  // searchQueryが空で、ジャンルも選択されていない場合は何もしない
   try {
     const searchFilters = {};
+    //
     if (filters.year) searchFilters.year = parseInt(filters.year);
     if (filters.genre) searchFilters.with_genres = filters.genre;
     if (filters.rating[0] > 0) searchFilters['vote_average.gte'] = filters.rating[0];
     if (filters.rating[1] < 10) searchFilters['vote_average.lte'] = filters.rating[1];
 
-    await movieStore.searchMovies(searchQuery.value, searchFilters);
+    if (hasSearchQuery) {
+      // タイトル検索
+      await movieStore.searchMovies(searchQuery.value, searchFilters);
+    } else {
+      // ジャンル検索やフィルタのみ
+      const response = await tmdbApi.discoverMovies(searchFilters);
+      movieStore.searchResults = response.results;
+      movieStore.currentSearchQuery = `ジャンル検索`;
+    }
   } catch (error) {
     console.error('検索エラー:', error);
   }

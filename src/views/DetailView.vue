@@ -44,6 +44,16 @@
               </p>
               <p><strong>上映時間：</strong>{{ movieDetail.runtime }}分</p>
               <p><strong>平均評価：</strong>{{ movieDetail.vote_average }}</p>
+              <p><strong>ジャンル：</strong></p>
+              <ul>
+                <li
+                  v-for="genre in movieDetail.genres"
+                  :key="genre.id"
+                  class="d-inline-block mr-2"
+                >
+                  #{{ genre.name }}
+                </li>
+              </ul>
             </div>
 
             <!-- ジャンル -->
@@ -96,6 +106,7 @@ const movieId = computed(() => Number(route.params.id));
 
 // 現在表示中の映画詳細
 const movieDetail = computed(() => movieStore.selectedMovie);
+console.log('movieDetail:', movieDetail.value);
 const loading = computed(() => movieStore.loading.movieDetails);
 const error = computed(() => movieStore.errors.movieDetails);
 
@@ -129,6 +140,7 @@ const fetchMovieDetails = async () => {
   try {
       console.log('映画詳細を取得中...', id);
       await movieStore.fetchMovieDetail(id);
+      console.log('映画詳細取得成功:', movieStore.selectedMovie);
     } catch (error){
       console.error('映画詳細の取得に失敗:', error);
     }

@@ -15,9 +15,9 @@
       <v-icon start>mdi-movie</v-icon>
       人気の映画
     </v-tab>
-    <v-tab to="/reviewForm">
+    <v-tab to="/upcoming">
       <v-icon start>mdi-message-fast-outline</v-icon>
-      投稿したレビュー
+      公開予定の映画
     </v-tab>
   </v-tabs>
 </template>
