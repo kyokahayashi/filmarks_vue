@@ -34,6 +34,11 @@ const router = createRouter({
       component: () => import('@/views/PopularView.vue')
     },
     {
+      path: '/upcoming',
+      name: 'Upcoming',
+      component: () => import('@/views/UpcomingView.vue')
+    },
+    {
       path: '/login',
       name: 'Login',
       component: () => import('@/views/LoginView.vue')

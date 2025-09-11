@@ -123,14 +123,35 @@ export const tmdbApi = {
     url.searchParams.set('include_adult', include_adult.toString());
 
     // オプショナルパラメータ
-    if (year) url.searchParams.set('year', year.toString());
+    if (year) {
+      // search API は year と primary_release_year の両方を指定して精度を上げる
+      url.searchParams.set('year', year.toString());
+      url.searchParams.set('primary_release_year', year.toString());
+    }
     if (primary_release_year) url.searchParams.set('primary_release_year', primary_release_year.toString());
     if (with_genres) url.searchParams.set('with_genres', with_genres);
     if (voteAverageGte) url.searchParams.set('vote_average.gte', voteAverageGte.toString());
     if (voteAverageLte) url.searchParams.set('vote_average.lte', voteAverageLte.toString());
 
     const response = await fetch(url.toString(), createApiOptions());
-    return handleApiResponse(response);
+    const data = await handleApiResponse(response);
+    // ジャンル情報が無い作品を除外（genre_ids または genres が空/未定義）
+    const filteredByGenre = (data.results || []).filter((item) => {
+      if (Array.isArray(item.genre_ids)) return item.genre_ids.length > 0;
+      if (Array.isArray(item.genres)) return item.genres.length > 0;
+      return false;
+    });
+    // 年指定がある場合はクライアント側でも厳密にフィルタ
+    const strictlyFiltered = (year || primary_release_year)
+      ? filteredByGenre.filter((item) => {
+          const d = item.release_date;
+          if (!d || typeof d !== 'string' || d.length < 4) return false;
+          const y = parseInt(d.slice(0, 4), 10);
+          const target = year || primary_release_year;
+          return y === Number(target);
+        })
+      : filteredByGenre;
+    return { ...data, results: strictlyFiltered };
   },
 
   // ジャンル一覧を取得するメソッド（フィルター用）
@@ -140,5 +161,55 @@ export const tmdbApi = {
 
     const response = await fetch(url.toString(), createApiOptions());
     return handleApiResponse(response);
+  },
+
+  // 新たなジャンルを取得するＡＰＩ
+  async discoverMovies({
+    page = 1,
+    include_adult = false,
+    language = 'ja-JP',
+    region = 'JP',
+    with_genres,
+    year,
+    'vote_average.gte': voteAverageGte,
+    'vote_average.lte': voteAverageLte,
+    sort_by = 'popularity.desc'
+  } = {}) {
+    const url = new URL(`${API_BASE_URL}/discover/movie`);
+    url.searchParams.set('page', page.toString());
+    url.searchParams.set('include_adult', include_adult.toString());
+    url.searchParams.set('language', language);
+    url.searchParams.set('region', region);
+    url.searchParams.set('sort_by', sort_by);
+
+    if (with_genres) url.searchParams.set('with_genres', with_genres.toString());
+    if (year) {
+      // discover API は year ではなく primary_release_year を使う
+      url.searchParams.set('primary_release_year', year.toString());
+      // さらに日付レンジで絞る（厳密化）
+      url.searchParams.set('primary_release_date.gte', `${year}-01-01`);
+      url.searchParams.set('primary_release_date.lte', `${year}-12-31`);
+    }
+    if (voteAverageGte) url.searchParams.set('vote_average.gte', voteAverageGte.toString());
+    if (voteAverageLte) url.searchParams.set('vote_average.lte', voteAverageLte.toString());
+
+    const response = await fetch(url.toString(), createApiOptions());
+    const data = await handleApiResponse(response);
+    // ジャンル情報が無い作品を除外
+    const filteredByGenre = (data.results || []).filter((item) => {
+      if (Array.isArray(item.genre_ids)) return item.genre_ids.length > 0;
+      if (Array.isArray(item.genres)) return item.genres.length > 0;
+      return false;
+    });
+    // 年指定がある場合はクライアント側でも厳密にフィルタ
+    const strictlyFiltered = year
+      ? filteredByGenre.filter((item) => {
+          const d = item.release_date;
+          if (!d || typeof d !== 'string' || d.length < 4) return false;
+          const y = parseInt(d.slice(0, 4), 10);
+          return y === Number(year);
+        })
+      : filteredByGenre;
+    return { ...data, results: strictlyFiltered };
   }
 };
