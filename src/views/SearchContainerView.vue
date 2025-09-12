@@ -147,15 +147,15 @@
       {{ movieStore.errors.search }}
     </v-alert>
 
-    <!-- ローディング -->
-    <div v-if="movieStore.loading.search" class="text-center py-12">
+    <!-- 初回ローディング（結果がまだ無い時のみ表示） -->
+    <div v-if="movieStore.loading.search && movieStore.searchResults.length === 0" class="text-center py-12">
       <v-progress-circular size="64" color="primary" indeterminate />
       <p class="text-h6 mt-4">検索中...</p>
     </div>
 
     <!-- 検索結果なし -->
     <v-card
-      v-else-if="movieStore.currentSearchQuery && movieStore.searchResults.length === 0"
+      v-else-if="movieStore.currentSearchQuery && movieStore.searchResults.length === 0 && !movieStore.loading.search"
       class="text-center py-12"
     >
       <v-card-text>
@@ -167,8 +167,8 @@
       </v-card-text>
     </v-card>
 
-    <!-- 検索結果の映画一覧 -->
-    <v-row v-else-if="movieStore.searchResults.length > 0">
+    <!-- 検索結果の映画一覧（追加読み込み中も表示を維持） -->
+    <v-row v-else-if="movieStore.searchResults.length > 0 || (movieStore.loading.search && movieStore.searchResults.length > 0)">
       <v-col
         v-for="movie in movieStore.searchResults"
         :key="movie.id"
@@ -178,6 +178,16 @@
         lg="3"
       >
         <MovieCard :movie="movie" @click="goToMovieDetail(movie.id)" />
+      </v-col>
+      <!-- 無限スクロール用のトリガー -->
+      <v-col cols="12">
+        <div ref="infiniteScrollTrigger"></div>
+        <div v-if="movieStore.loading.search" class="text-center py-6">
+          <v-progress-circular color="primary" indeterminate />
+        </div>
+        <div v-else-if="!movieStore.searchPagination.hasNextPage" class="text-center py-4 text-medium-emphasis">
+          以上です
+        </div>
       </v-col>
     </v-row>
     <!-- デフォルト状態（検索前） -->
@@ -196,7 +206,7 @@
 <script setup>
 import MovieCard from '@/components/movie/MovieCard.vue';
 import { useMoviesStore } from '@/stores/movieStore';
-import { onMounted, reactive, ref } from 'vue';
+import { onMounted, onBeforeUnmount, reactive, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { tmdbApi } from '../../api/tmdbApi';
 import Header from '@/components/common/Header.vue';
@@ -217,6 +227,10 @@ const filters = reactive({
   rating: [0, 10]
 });
 
+// 無限スクロール監視用
+const infiniteScrollTrigger = ref(null);
+let observer = null;
+
 // メソッド
 const handleSearch = async () => {
   const hasSearchQuery = searchQuery.value?.trim().length > 0;
@@ -235,12 +249,26 @@ const handleSearch = async () => {
 
     if (hasSearchQuery) {
       // タイトル検索
-      await movieStore.searchMovies(searchQuery.value, searchFilters);
+      await movieStore.searchMovies(searchQuery.value, searchFilters, 1, false);
     } else {
       // ジャンル検索やフィルタのみ
-      const response = await tmdbApi.discoverMovies(searchFilters);
-      movieStore.searchResults = response.results;
-      movieStore.currentSearchQuery = `ジャンル検索`;
+      if (typeof movieStore.discoverMoviesForSearch === 'function') {
+        await movieStore.discoverMoviesForSearch(searchFilters, 1, false);
+      } else {
+        // HMRの不整合などでアクションが未定義な場合のフォールバック
+        const data = await tmdbApi.discoverMovies({ ...searchFilters, page: 1 });
+        const filtered = movieStore.filterMovies(data.results || []);
+        movieStore.searchResults = filtered;
+        movieStore.currentSearchQuery = 'ジャンル検索';
+        movieStore.searchPagination = {
+          currentPage: data.page,
+          totalPages: data.total_pages,
+          hasNextPage: data.page < data.total_pages,
+          mode: 'discover',
+          lastQuery: '',
+          lastFilters: { ...searchFilters }
+        };
+      }
     }
   } catch (error) {
     console.error('検索エラー:', error);
@@ -291,6 +319,32 @@ const initializeFromQuery = () => {
 onMounted(() => {
   loadGenres();
   initializeFromQuery();
+  // IntersectionObserver 設定
+  observer = new IntersectionObserver((entries) => {
+    const [entry] = entries;
+    if (entry.isIntersecting) {
+      movieStore.loadMoreSearch();
+    }
+  }, {
+    root: null,
+    rootMargin: '100px',
+    threshold: 0.1,
+  });
+  if (infiniteScrollTrigger.value) {
+    observer.observe(infiniteScrollTrigger.value);
+  }
+});
+
+// 要素が後から描画された場合にも監視を開始
+watch(() => infiniteScrollTrigger.value, (el, prev) => {
+  if (observer && el) observer.observe(el);
+});
+
+onBeforeUnmount(() => {
+  if (observer) {
+    observer.disconnect();
+    observer = null;
+  }
 });
 </script>
 
