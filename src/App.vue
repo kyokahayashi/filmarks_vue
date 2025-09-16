@@ -4,15 +4,6 @@ import { RouterLink, RouterView } from 'vue-router'
 
 <template>
   <v-app>
-    <header>
-      <div class="wrapper">
-        <nav>
-          <RouterLink to="/">Home</RouterLink>
-          <RouterLink to="/reviewForm">reviewForm</RouterLink>
-          <!-- <RouterLink to="/about">About</RouterLink> -->
-        </nav>
-      </div>
-    </header>
     <RouterView />
   </v-app>
 </template>
