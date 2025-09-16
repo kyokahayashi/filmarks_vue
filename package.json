@@ -12,6 +12,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@dataconnect/generated": "file:src/dataconnect-generated",
     "@mdi/font": "^7.4.47",
     "axios": "^1.11.0",
     "firebase": "^12.2.1",
