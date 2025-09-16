@@ -14,6 +14,15 @@ export const useMoviesStore = defineStore("movie", {
       searchHistory: JSON.parse(localStorage.getItem('movieSearchHistory') || '[]'),
       // 検索クエリ
       currentSearchQuery: '',
+      // 検索ページネーション・直近条件
+      searchPagination: {
+        currentPage: 0,
+        totalPages: 0,
+        hasNextPage: false,
+        mode: null, // 'search' | 'discover'
+        lastQuery: '',
+        lastFilters: {}
+      },
       // 単体の映画データ
       selectedMovie: null,
 
@@ -123,12 +132,19 @@ export const useMoviesStore = defineStore("movie", {
       localStorage.removeItem('movieSearchHistory');
     },
 
-    // 映画を検索
-    async searchMovies(query, filters = {}) {
+    // 検索開始/追加読み込み（query ありのタイトル検索）
+    async searchMovies(query, filters = {}, page = 1, append = false) {
       if (!query || query.trim() === '') {
         this.searchResults = [];
-        console.log('searchResults', this.searchResults)
         this.currentSearchQuery = '';
+        this.searchPagination = {
+          currentPage: 0,
+          totalPages: 0,
+          hasNextPage: false,
+          mode: null,
+          lastQuery: '',
+          lastFilters: {}
+        };
         return;
       }
 
@@ -138,21 +154,68 @@ export const useMoviesStore = defineStore("movie", {
       try {
         const searchParams = {
           query: this.currentSearchQuery,
+          page,
           ...filters
         };
         const data = await tmdbApi.searchMovies(searchParams);
 
         // 検索結果をフィルタリング
-        this.searchResults = this.filterMovies(data.results || []);
-        console.log('SearchResults:', this.searchResults)
+        const filtered = this.filterMovies(data.results || []);
+        if (append) {
+          this.searchResults = [...this.searchResults, ...filtered];
+        } else {
+          this.searchResults = filtered;
+        }
 
-        // 検索履歴に追加
-        this.addToSearchHistory(this.currentSearchQuery);
-
-        return {
-          ...data,
-          results: this.searchResults
+        // ページネーション更新
+        this.searchPagination = {
+          currentPage: data.page,
+          totalPages: data.total_pages,
+          hasNextPage: data.page < data.total_pages,
+          mode: 'search',
+          lastQuery: this.currentSearchQuery,
+          lastFilters: { ...filters }
         };
+
+        // 検索履歴に追加（初回のみ）
+        if (!append && page === 1) this.addToSearchHistory(this.currentSearchQuery);
+
+        return { ...data, results: this.searchResults };
+      } catch (error) {
+        this.errors.search = error.message;
+        console.error('映画検索に失敗:', error);
+        throw error;
+      } finally {
+        this.loading.search = false;
+      }
+    },
+
+    // フィルタのみでの検索（discover）
+    async discoverMoviesForSearch(filters = {}, page = 1, append = false) {
+      this.loading.search = true;
+      this.errors.search = null;
+      // 表示用の検索クエリラベル
+      this.currentSearchQuery = 'ジャンル検索';
+      try {
+        const params = { page, ...filters };
+        const data = await tmdbApi.discoverMovies(params);
+        const filtered = this.filterMovies(data.results || []);
+        if (append) {
+          this.searchResults = [...this.searchResults, ...filtered];
+        } else {
+          this.searchResults = filtered;
+        }
+
+        this.searchPagination = {
+          currentPage: data.page,
+          totalPages: data.total_pages,
+          hasNextPage: data.page < data.total_pages,
+          mode: 'discover',
+          lastQuery: '',
+          lastFilters: { ...filters }
+        };
+
+        return { ...data, results: this.searchResults };
       } catch (error) {
         this.errors.search = error.message;
         console.error('映画検索に失敗:', error);
@@ -167,6 +230,26 @@ export const useMoviesStore = defineStore("movie", {
       this.searchResults = [];
       this.currentSearchQuery = '';
       this.errors.search = null;
+      this.searchPagination = {
+        currentPage: 0,
+        totalPages: 0,
+        hasNextPage: false,
+        mode: null,
+        lastQuery: '',
+        lastFilters: {}
+      };
+    },
+
+    // 検索結果の追加読み込み
+    async loadMoreSearch() {
+      const { hasNextPage, mode, currentPage, lastQuery, lastFilters } = this.searchPagination;
+      if (!hasNextPage || this.loading.search) return;
+      const nextPage = currentPage + 1;
+      if (mode === 'search') {
+        return await this.searchMovies(lastQuery, lastFilters, nextPage, true);
+      } else if (mode === 'discover') {
+        return await this.discoverMoviesForSearch(lastFilters, nextPage, true);
+      }
     },
 
     // 無限スクロール用のロードメソッド(最大リトライ回数制限付き)
